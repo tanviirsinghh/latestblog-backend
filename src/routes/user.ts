@@ -5,18 +5,21 @@ import { jwt, sign, verify } from "hono/jwt";
 import { X_HONO_DISABLE_SSG_HEADER_KEY } from "hono/ssg"; 
 import { string, z } from "zod";
 import { signinInput, signupInput } from "@tanviirsinghh/medium-common";
-
-
+import { sendOtp } from "../services/mail";
+import { totp } from "otplib";
 
 export const userRoute = new Hono<{
     Bindings: {
       DATABASE_URL: string;
       JWT_SECRET: string;
-      SECRET_OTP:string;
+      OTP_SECRET:string
+      API_KEY:string
+   
+     
     };
   }>();
   
-
+  const OTPSECRET="fuckyoubitchgotohell"
   // To restrict a middleware to certain routes, you can use the following -
 
 // app.use('/message/*', async (c, next) => {
@@ -38,44 +41,89 @@ userRoute.post("/signup", async (c) => {
     const prisma = new PrismaClient({
       datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate());
+
+    // const otptoken = totp.generate(OTPSECRET)
+    // console.log(otptoken)
+
+    // const otp = (OTPSECRET);
+    console.log("otp check here")
+ 
+    
+    const apikey = c.env.API_KEY
+   const secret = c.env.OTP_SECRET
   console.log("request entered backend")
+
     const body = await c.req.json();
+
     console.log(body)
+    console.log("after body")
+
     const {success} = signupInput.safeParse(body)
+
     if(!success){
       c.status(411)
       return c.json({
         message:"Input not correct"
       })
     }
+
     console.log("create databse")
+    const emailCheck = await prisma.temporaryUser.findUnique({
+      where:{
+          email:body.email
+      }
+      
+    })
+    console.log("fuck")
+    if(emailCheck){
+      c.status(403);
+      return c.json({
+        error:"User already exist"
+      })
+    }
+    console.log("fuck")
+    
+
     try {
-      const user = await prisma.user.create({
+      
+    //  console.log("before otp function" + otp)
+    //  const responce =  await sendOtp({email, otp, apikey});
+  //  const otp = '1234'
+      const user = await prisma.temporaryUser.create({
         data: {
           name: body.name,
           email: body.email,
           password: body.password,
+          otp:"1234",
+          isVerified:false,
           
         }
-        
      });
-     console.log(user)
+     console.log("temporary user created successfully")
+    //  console.log('otp sent')
+    //  const email = body.email;
+
+    //  const otpResponse = await sendOtp({apikey, otp , email})
+    //  console.log("this is otp function respone after completion " + otpResponse)
+    //  aft
       // After creating the user, its returns us the user's id
       // which we are using here to sign
       const token = await sign({ id: user.id }, c.env.JWT_SECRET);
       // after signing the JWT will return us a token that we are returning
-      console.log(token)
+      console.log("jwt token " + token)
       return c.json({
         token
       });
       
-    } catch (e) {}
+    } 
+  catch (e) {
+
     c.status(403);
     return c.json({
       error: "Error while signing up",
     });
+  }
   });
-  
   userRoute.post("/signin", async (c) => {
     const prisma = new PrismaClient({
       datasourceUrl: c.env.DATABASE_URL,

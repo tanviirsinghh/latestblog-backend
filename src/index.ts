@@ -6,14 +6,13 @@ import { X_HONO_DISABLE_SSG_HEADER_KEY } from "hono/ssg";
 import { userRoute } from "./routes/user";
 import { blogRoute } from "./routes/blog";
 import { cors } from "hono/cors";
-import {totp} from 'otplib'
 
 
 const app = new Hono<{
   Bindings: {
     DATABASE_URL: string;
     JWT_SECRET: string;
-  SECRET_OTP:string;
+ 
   };
 }>();
  

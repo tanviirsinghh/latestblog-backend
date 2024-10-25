@@ -1,10 +1,14 @@
 name = "backend"
 compatibility_date = "2023-12-01"
-# our development file will pick this url
- [vars]
-DATABASE_URL="prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiNWIxOTliOTYtMjZjNS00ZWVkLTk3YTQtMzg4ODRhZTM4NzczIiwidGVuYW50X2lkIjoiMjg2OTcwNTY3MGE4M2U4MDdjOGRkNjA3MDZmOWU2Mjg0ZmU0Y2JhNmEyYTBhMjFlNjRiYTI4NjcwY2RlNzI4MiIsImludGVybmFsX3NlY3JldCI6IjlmOWJmMDYwLTNmNDQtNDhiMC1iMDg4LTg3YTA1MDcyMDRhMCJ9.69FtUeLMDI-JD5pwc46zxjxKPq8ENpyKyNSWF49FRSc"
- JWT_SECRET="fuckoff"
+compatibility_flags = [ "nodejs_compat" ]
 
+[vars]
+DATABASE_URL = "prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiNWIxOTliOTYtMjZjNS00ZWVkLTk3YTQtMzg4ODRhZTM4NzczIiwidGVuYW50X2lkIjoiMjg2OTcwNTY3MGE4M2U4MDdjOGRkNjA3MDZmOWU2Mjg0ZmU0Y2JhNmEyYTBhMjFlNjRiYTI4NjcwY2RlNzI4MiIsImludGVybmFsX3NlY3JldCI6IjlmOWJmMDYwLTNmNDQtNDhiMC1iMDg4LTg3YTA1MDcyMDRhMCJ9.69FtUeLMDI-JD5pwc46zxjxKPq8ENpyKyNSWF49FRSc"
+JWT_SECRET = "fuckoff"
+OTP_SECRET = "ladhdivkinasohnaaakehndinhibolnaterenal"
+API_KEY = "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"
+
+# Uncomment and configure these sections as necessary:
 # [[kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"
 # id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
