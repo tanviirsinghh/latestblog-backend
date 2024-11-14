@@ -21,21 +21,16 @@ model User {
   password String
   posts    Post[]
 }
+// a quick brown fox jumps over the lazy dog 
 
-model temporaryUser {
-  id         String  @id @default(uuid())
-  email      String  @unique
-  name       String?
-  password   String
-  otp        String?
-  isVerified Boolean @default(false)
-}
 
 model Post {
   id        String  @id @default(uuid())
   title     String
   content   String
+  url       String?
   published Boolean @default(false)
   author    User    @relation(fields: [authorId], references: [id])
   authorId  String
+  
 }

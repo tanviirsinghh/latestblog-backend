@@ -78,7 +78,7 @@ userRoute.post("/signup", async (c) => {
     if(emailCheck){
       c.status(403);
       return c.json({
-        error:"User already exist"
+        error:"Email Already in Use"
       })
     }
     console.log("fuck")
@@ -89,13 +89,13 @@ userRoute.post("/signup", async (c) => {
     //  console.log("before otp function" + otp)
     //  const responce =  await sendOtp({email, otp, apikey});
   //  const otp = '1234'
-      const user = await prisma.temporaryUser.create({
+      const user = await prisma.user.create({
         data: {
           name: body.name,
           email: body.email,
           password: body.password,
-          otp:"1234",
-          isVerified:false,
+          // otp:"1234",
+          // isVerified:false,
           
         }
      });
@@ -118,7 +118,7 @@ userRoute.post("/signup", async (c) => {
     } 
   catch (e) {
 
-    c.status(403);
+    c.status(500)
     return c.json({
       error: "Error while signing up",
     });
@@ -145,18 +145,22 @@ userRoute.post("/signup", async (c) => {
       },
     });
     if (!user) {
-      c.status(403);
+      c.status(401);
       return c.json({
-        error: "user not found / Sign up first/ Incorrect creds",
+        error: "user not found / Incorrect creds",
       });
     }
     const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
   
     return c.text(
-      jwt);
-    }catch(e){
-    c.status(411)
-    return c.text("Invalid")
+
+      jwt); 
+
+    } catch (e) {
+
+    c.status(500)
+
+    return c.text("Please try again")
     }
   });
 
