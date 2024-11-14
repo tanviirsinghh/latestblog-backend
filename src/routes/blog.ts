@@ -163,6 +163,7 @@ blogRoute.get('/:id', async c => {
         id: true,
         title: true,
         content: true,
+        url:true,
         author: {
           select: {
             name: true
