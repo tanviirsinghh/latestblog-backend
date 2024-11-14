@@ -71,7 +71,7 @@ blogRoute.post('/', async c => {
   // sending the img to the cloudinary
   // const img = body.img;
   // const imgUpload = sendImg(img);
-  console.log("here is the body.url " + body.url)
+  // console.log("here is the body.url " + body.url)
 console.log("try block of create blog")
 try{
   const post = await prisma.post.create({

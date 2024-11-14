@@ -68,7 +68,7 @@ userRoute.post("/signup", async (c) => {
     }
 
     console.log("create databse")
-    const emailCheck = await prisma.temporaryUser.findUnique({
+    const emailCheck = await prisma.user.findUnique({
       where:{
           email:body.email
       }
