@@ -124,6 +124,8 @@ userRoute.post("/signup", async (c) => {
     });
   }
   });
+
+
   userRoute.post("/signin", async (c) => {
     const prisma = new PrismaClient({
       datasourceUrl: c.env.DATABASE_URL,
@@ -151,7 +153,10 @@ userRoute.post("/signup", async (c) => {
       });
     }
     const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
-  
+    console.log('chalda')
+     console.log(
+"here is the returning token" + jwt
+     )
     return c.text(
 
       jwt); 

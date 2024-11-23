@@ -132,11 +132,13 @@ blogRoute.get('/bulk', async c => {
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
+  try{
   const posts = await prisma.post.findMany({
     select: {
       content: true,
       title: true,
       id: true,
+      url:true,
       author: {
         select: {
           name: true
@@ -147,6 +149,13 @@ blogRoute.get('/bulk', async c => {
   return c.json({
     posts
   })
+}
+catch(e){
+  c.status(411)
+  return c.json({
+    message: 'Error while fetching blogs'
+  })
+}
 })
 
 blogRoute.get('/:id', async c => {
