@@ -18,7 +18,6 @@ export const userRoute = new Hono<{
     };
   }>();
   
-  // const OTPSECRET="fuckyoubitchgotohell"
   // To restrict a middleware to certain routes, you can use the following -
 
 // app.use('/message/*', async (c, next) => {
