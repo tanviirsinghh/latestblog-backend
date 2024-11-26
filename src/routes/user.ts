@@ -5,8 +5,7 @@ import { jwt, sign, verify } from "hono/jwt";
 import { X_HONO_DISABLE_SSG_HEADER_KEY } from "hono/ssg"; 
 import { string, z } from "zod";
 import { signinInput, signupInput } from "@tanviirsinghh/medium-common";
-import { sendOtp } from "../services/mail";
-import { totp } from "otplib";
+
 
 export const userRoute = new Hono<{
     Bindings: {
