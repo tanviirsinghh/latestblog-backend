@@ -170,4 +170,8 @@ userRoute.post("/signup", async (c) => {
   });
 
 
- userRoute
+ userRoute.get('/:id', async (c) =>{
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+ })
