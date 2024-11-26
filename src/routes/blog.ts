@@ -148,7 +148,9 @@ blogRoute.get('/bulk', async c => {
   })
   return c.json({
     posts
+ 
   })
+  console.log("completed the fetch from the blogs")
 }
 catch(e){
   c.status(411)

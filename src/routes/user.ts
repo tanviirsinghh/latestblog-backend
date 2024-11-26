@@ -94,6 +94,8 @@ userRoute.post("/signup", async (c) => {
           name: body.name,
           email: body.email,
           password: body.password,
+          blogName:body.blogName,
+          profilePicture: body.profilePicture
           // otp:"1234",
           // isVerified:false,
           
