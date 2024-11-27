@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { Prisma, PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
-import { jwt, sign, verify, verify } from 'hono/jwt'
+import { jwt, sign, verify } from 'hono/jwt'
 import { X_HONO_DISABLE_SSG_HEADER_KEY } from 'hono/ssg'
 import { string, z } from 'zod'
 import { signinInput, signupInput } from '@tanviirsinghh/medium-common'
@@ -37,10 +37,6 @@ userRoute.post('/signup', async c => {
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
-  // const otptoken = totp.generate(OTPSECRET)
-  // console.log(otptoken)
-
-  // const otp = (OTPSECRET);
   console.log('otp check here')
 
   const apikey = c.env.API_KEY
@@ -77,9 +73,6 @@ userRoute.post('/signup', async c => {
   console.log('fuck')
 
   try {
-    //  console.log("before otp function" + otp)
-    //  const responce =  await sendOtp({email, otp, apikey});
-    //  const otp = '1234'
     const user = await prisma.user.create({
       data: {
         name: body.name,
@@ -92,12 +85,8 @@ userRoute.post('/signup', async c => {
       }
     })
     console.log('temporary user created successfully')
-    //  console.log('otp sent')
-    //  const email = body.email;
 
     //  const otpResponse = await sendOtp({apikey, otp , email})
-    //  console.log("this is otp function respone after completion " + otpResponse)
-    //  aft
     // After creating the user, its returns us the user's id
     // which we are using here to sign
     const token = await sign({ id: user.id }, c.env.JWT_SECRET)
@@ -156,33 +145,33 @@ userRoute.get('/details', async c => {
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
-  const authHeader = c.req.header('Authorization'); // Get Authorization header
+  const authHeader = c.req.header('Authorization') // Get Authorization header
   if (!authHeader) {
-    c.status(401);
-    return c.text('Token not available');
+    c.status(401)
+    return c.text('Token not available')
   }
 
   // Remove 'Bearer ' prefix if present
-  const token = authHeader.replace('Bearer ', '');
+  const token = authHeader.replace('Bearer ', '')
 
-  let decode : { id: string } | null = null;
+  let decode: { id: string } | null = null
   try {
-    decode = await verify(token, c.env.JWT_SECRET)as {id:string} // Decode the token
-    console.log('Token decoded successfully');
+    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string } // Decode the token
+    console.log('Token decoded successfully')
   } catch (e) {
-    console.error('Token verification failed', e); // Log error for debugging
-    c.status(401);
-    return c.text('Token not verified');
+    console.error('Token verification failed', e) // Log error for debugging
+    c.status(401)
+    return c.text('Token not verified')
   }
 
-  const userId = decode?.id; // Extract userId from the decoded token
+  const userId = decode?.id // Extract userId from the decoded token
   if (!userId) {
-    c.status(400);
-    return c.text('Invalid token payload');
+    c.status(400)
+    return c.text('Invalid token payload')
   }
 
   try {
-    console.log(`Fetching data for userId: ${userId}`);
+    console.log(`Fetching data for userId: ${userId}`)
 
     // Fetch user data from the database
     const userData = await prisma.user.findUnique({
@@ -191,20 +180,20 @@ userRoute.get('/details', async c => {
         name: true,
         email: true,
         blogName: true,
-        profilePicture: true,
-      },
-    });
+        profilePicture: true
+      }
+    })
 
     // Check if user exists
     if (!userData) {
-      c.status(404);
-      return c.text('User not found');
+      c.status(404)
+      return c.text('User not found')
     }
 
-    return c.json(userData); // Send user data as response
+    return c.json(userData) // Send user data as response
   } catch (e) {
-    console.error('Database error:', e); // Log error for debugging
-    c.status(500);
-    return c.text('Error while fetching user details from the database');
+    console.error('Database error:', e) // Log error for debugging
+    c.status(500)
+    return c.text('Error while fetching user details from the database')
   }
-});
+})
