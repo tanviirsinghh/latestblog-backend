@@ -132,7 +132,7 @@ userRoute.post('/signin', async c => {
     const jwt = await sign({ id: user.id }, c.env.JWT_SECRET)
     console.log('chalda')
     console.log('here is the returning token' + jwt)
-    return c.text(jwt)
+    return c.json(jwt)
   } catch (e) {
     c.status(500)
 
