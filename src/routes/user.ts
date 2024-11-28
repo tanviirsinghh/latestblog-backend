@@ -202,7 +202,7 @@ userRoute.get('/details', async c => {
 
 //  update the image 
 
-userRoute.put('/updateprofilepicture', async c => {
+userRoute.put('/update-profile-picture', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
