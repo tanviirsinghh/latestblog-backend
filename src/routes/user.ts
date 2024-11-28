@@ -125,14 +125,14 @@ userRoute.post('/signin', async c => {
     })
     if (!user) {
       c.status(401)
-      return c.json({
-        error: 'user not found / Incorrect creds'
-      })
+      return c.text('user not found / Incorrect creds' )
     }
     const jwt = await sign({ id: user.id }, c.env.JWT_SECRET)
     console.log('chalda')
     console.log('here is the returning token' + jwt)
-    return c.json(jwt)
+    return c.json({
+      token : jwt
+    })
   } catch (e) {
     c.status(500)
 
@@ -160,7 +160,7 @@ userRoute.get('/details', async c => {
     console.log('Token decoded successfully')
   } catch (e) {
     console.error('Token verification failed', e) // Log error for debugging
-    c.status(401)
+    c.status(500)
     return c.text('Token not verified')
   }
 
