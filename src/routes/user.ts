@@ -5,6 +5,7 @@ import { jwt, sign, verify } from 'hono/jwt'
 import { X_HONO_DISABLE_SSG_HEADER_KEY } from 'hono/ssg'
 import { string, z } from 'zod'
 import { signinInput, signupInput } from '@tanviirsinghh/medium-common'
+import { User } from '../../../Blog/src/hooks/index';
 
 export const userRoute = new Hono<{
   Bindings: {
@@ -196,4 +197,50 @@ userRoute.get('/details', async c => {
     c.status(500)
     return c.text('Error while fetching user details from the database')
   }
+})
+
+
+//  update the image 
+
+userRoute.put('/updateprofilepicture', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+   
+  const body = await c.req.json()
+  const token = c.req.header('authorization') 
+  if(!token){
+    c.status(401)
+    return c.text("Token not found")
+  }
+  
+  const decode = await verify(token, c.env.JWT_SECRET)
+
+  if(!decode){
+    c.status(411)
+    return c.text('Token not verified')
+  }
+  try{
+  const response = await prisma.user.update({
+    where:{
+      id:decode.id
+    },
+    data:{
+      profilePicture:body.imgUrl
+    }
+  })
+  return c.json( {
+    success:true,
+    user: response
+  })
+}
+catch(e){
+  c.status(500)
+  return c.json({
+    success: false,
+    message: 'Server / Database Error'
+  })
+}
+
+
 })
