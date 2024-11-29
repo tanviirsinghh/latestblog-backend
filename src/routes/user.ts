@@ -214,19 +214,27 @@ userRoute.put('/update-profile-picture', async c => {
     return c.text("Token not found")
   }
   
-  const decode = await verify(token, c.env.JWT_SECRET)
+  // const decode = await verify(token, c.env.JWT_SECRET)
 
-  if(!decode){
-    c.status(411)
-    return c.text('Token not verified')
-  }
+  const decode = await verify(token, c.env.JWT_SECRET) as { id: string | undefined };
+
+       if (!decode?.id) {
+  c.status(411);
+  return c.text('Token not verified or ID missing');
+} 
+  // if(!decode){
+  //   c.status(411)
+  //   return c.text('Token not verified')
+  // }
+  console.log(body.profilePicture)
   try{
+    console.log("entered the try block")
   const response = await prisma.user.update({
     where:{
-      id:decode.id
+    id:decode.id
     },
     data:{
-      profilePicture:body.imgUrl
+      profilePicture:body.profilePicture
     }
   })
   return c.json( {
