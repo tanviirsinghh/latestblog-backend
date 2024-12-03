@@ -3,7 +3,7 @@ import { Prisma, PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { jwt, sign, verify } from 'hono/jwt'
 import { X_HONO_DISABLE_SSG_HEADER_KEY } from 'hono/ssg'
-import { string, z } from 'zod'
+import { object, string, z } from 'zod'
 import { signinInput, signupInput } from '@tanviirsinghh/medium-common'
 import { User } from '../../../Blog/src/hooks/index';
 
@@ -236,6 +236,66 @@ userRoute.put('/update-profile-picture', async c => {
     data:{
       profilePicture:body.profilePicture
     }
+  })
+  return c.json( {
+    success:true,
+    user: response
+  })
+}
+catch(e){
+  c.status(500)
+  return c.json({
+    success: false,
+    message: 'Server / Database Error'
+  })
+}
+
+
+})
+
+userRoute.put('/update-user-info', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+   console.log('backend')
+  const body = await c.req.json()
+  const token = c.req.header('authorization') 
+  if(!token){
+    c.status(401)
+    return c.text("Token not found")
+  }
+  
+  // const decode = await verify(token, c.env.JWT_SECRET)
+
+  const decode = await verify(token, c.env.JWT_SECRET) as { id: string | undefined };
+
+       if (!decode?.id) {
+  c.status(411);
+  return c.text('Token not verified or ID missing');
+} 
+  // if(!decode){
+  //   c.status(411)
+  //   return c.text('Token not verified')
+  // }
+  console.log(body)
+  console.log('backend object de uppper')
+  const updatedData: Record<string, string> ={}
+
+  if(body.name) updatedData.name = body.name;
+  if(body.email) updatedData.email = body.email;
+  if(body.blogName) updatedData.blogName = body.blogName;
+  
+if(Object.keys(updatedData).length === 0){
+  c.status(401);
+  return c.text('No Valid Fields to Update')
+}
+  try{
+    console.log("entered the try block")
+  const response = await prisma.user.update({
+    where:{
+    id:decode.id
+    },
+    data:updatedData
   })
   return c.json( {
     success:true,
