@@ -17,6 +17,7 @@ model User {
   profilePicture String?
   posts          Post[]
   savedPosts     SavedPost[]
+  
 }
 
 model Post {
@@ -37,3 +38,4 @@ model SavedPost{
   user     User @relation(fields:[userId], references: [id])
   post     Post @relation(fields: [postId], references: [id])
 }
+

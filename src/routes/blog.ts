@@ -4,6 +4,7 @@ import { createBlogInput, updateBlogInput } from '@tanviirsinghh/medium-common'
 import { Hono } from 'hono'
 import { jwt, sign, verify } from 'hono/jwt'
 import { JWTPayload } from 'hono/utils/jwt/types'
+import SavedBlogs from '../../../Blog/src/components/UserProfile.tsx/SavedBlogs';
 
 export const blogRoute = new Hono<{
   Bindings: {
@@ -23,6 +24,7 @@ blogRoute.use('/*', async (c, next) => {
   // const token = verified.split(" ")[1]
   const decode = (await verify(verified, c.env.JWT_SECRET)) as JWTPayload
   console.log(decode)
+  
 
 // 
 //  
@@ -183,6 +185,203 @@ blogRoute.get('/:id', async c => {
       }
     })
     return c.json(post)
+  } catch (e) {
+    c.status(411)
+    return c.json({
+      message: 'Error while fetching blog post'
+    })
+  }
+})
+
+blogRoute.post('/saveblog', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+  console.log('backend')
+  const body = await c.req.json()
+
+  const token = c.req.header('authorization') 
+  if(!token){
+    c.status(401)
+    return c.text("Token not found")
+  }
+  console.log("token aagya")
+  // const decode = await verify(token, c.env.JWT_SECRET)
+
+  const decode = await verify(token, c.env.JWT_SECRET) as { id: string | undefined };
+
+       if (!decode?.id) {
+  c.status(411);
+  return c.text('Token not verified or ID missing');
+} 
+  // if(!decode){
+  console.log('start')
+
+  // try{
+  //   await prisma.savedPost.findUnique({
+  //     where:{
+  //       postId: body.postId,
+  //       userId: decode.id,
+
+  //     }
+  //   })
+  // }
+  try {
+    const saveBlog = await prisma.savedPost.create({
+      data: {
+        postId: body.postId,
+        userId: decode.id,
+      }
+    })
+    return c.json(saveBlog)
+  } catch (e) {
+    c.status(411)
+    return c.json({
+      message: 'Error while fetching blog post'
+    })
+  }
+})
+
+blogRoute.get('/savedblogs', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate()) 
+
+  const token = c.req.header('authorization');
+  if (!token) {
+    c.status(401);
+    return c.text("Token not found");
+  }
+
+  const decode = await verify(token, c.env.JWT_SECRET) as { id: string | undefined };
+  if (!decode?.id) {
+    c.status(401);
+    return c.text("Token not verified");
+  }
+ 
+try{
+  const savedBlogs = await prisma.savedPost.findMany({
+    where: { userId: decode.id },
+    include: { post: true } // Include post details if needed
+  });
+
+  return c.json(savedBlogs);
+} catch (e) {
+  c.status(411)
+  return  c.json({
+    message: 'Error while fetching blog post'
+  })
+}
+});
+
+
+
+blogRoute.get('/bookmarkstatus/:id', async (c) => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+    
+  const token = c.req.header('authorization') 
+  if(!token){
+    c.status(401)
+    return c.text("Token not found")
+  }
+  
+  // const decode = await verify(token, c.env.JWT_SECRET)
+
+  const decode = await verify(token, c.env.JWT_SECRET) as { id: string | undefined };
+
+       if (!decode?.id) {
+  c.status(411);
+  return c.text('Token not verified or ID missing');
+} 
+  try {
+    const id = c.req.param('id'); // Extract post ID from route parameter
+    const blog = await prisma.savedPost.findFirst({
+      where: { 
+        postId: id,
+        userId : decode.id
+       }, // Check if the blog exists by ID
+    });
+
+    if (!blog) {
+      // Blog not found
+      return c.json(
+        { 
+          isBookmarked: false, 
+          message: 'Blog not found' 
+        }, 
+        404
+      );
+    }
+
+    // Blog found
+    return c.json(
+      { 
+        isBookmarked: true, 
+        blog 
+      }, 
+      200
+    );
+  } catch (e) {
+    // Handle errors like database connection issues
+    return c.json(
+      { 
+        
+        isBookmarked: false, 
+        message: 'Error while fetching blog post', 
+        
+      }, 
+      500
+    );
+  }
+});
+
+blogRoute.delete('/removesavedblog/:id', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+  console.log('backend')
+  // const body = await c.req.json()
+  const id = c.req.param('id');
+  if (!id) {
+    c.status(400);
+    return c.json({ message: "ID parameter is missing or invalid" });
+  }
+  const token = c.req.header('authorization') 
+  if(!token){
+    c.status(401)
+    return c.text("Token not found")
+  }
+  console.log("token aagya")
+
+
+  const decode = await verify(token, c.env.JWT_SECRET) as { id: string | undefined };
+
+       if (!decode?.id) {
+  c.status(411);
+  return c.text('Token not verified or ID missing');
+} 
+  // if(!decode){
+  console.log('start delete')
+  console.log(decode.id)
+  try {
+
+    const remove = await prisma.savedPost.deleteMany({
+      where: {
+        postId: id,
+        userId: decode.id
+      }
+    });
+
+    if (remove.count === 0) {
+      c.status(404);
+      return c.json({ message: 'Saved blog not found or you do not have permission to remove it' });
+    }
+    return c.json({
+      message: 'Blog unsaved',
+      remove
+    })
   } catch (e) {
     c.status(411)
     return c.json({
