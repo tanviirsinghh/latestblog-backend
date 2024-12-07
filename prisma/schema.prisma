@@ -13,8 +13,14 @@ model User {
   email          String  @unique
   name           String?
   password       String
-  blogName       String
+  blogName       String?
   profilePicture String?
+  linkedin        String?
+  github          String?
+  Twitter         String?
+  location         String?
+  bio             String?
+  coverpicture     String?
   posts          Post[]
   savedPosts     SavedPost[]
   

@@ -80,9 +80,9 @@ userRoute.post('/signup', async c => {
         email: body.email,
         password: body.password,
         blogName: body.blogName,
-        profilePicture: body.profilePicture
-        // otp:"1234",
-        // isVerified:false,
+        profilePicture: body.profilePicture,
+        bio:body.bio,
+        location:body.location,
       }
     })
     console.log('temporary user created successfully')
