@@ -219,39 +219,39 @@ blogRoute.post('/saveblog', async c => {
   }
 })
 
-blogRoute.get('/savedblogs', async c => {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL
-  }).$extends(withAccelerate())
+// blogRoute.get('/savedblogs', async c => {
+//   const prisma = new PrismaClient({
+//     datasourceUrl: c.env.DATABASE_URL
+//   }).$extends(withAccelerate())
 
-  const token = c.req.header('authorization')
-  if (!token) {
-    c.status(401)
-    return c.text('Token not found')
-  }
+//   const token = c.req.header('authorization')
+//   if (!token) {
+//     c.status(401)
+//     return c.text('Token not found')
+//   }
 
-  const decode = (await verify(token, c.env.JWT_SECRET)) as {
-    id: string | undefined
-  }
-  if (!decode?.id) {
-    c.status(401)
-    return c.text('Token not verified')
-  }
+//   const decode = (await verify(token, c.env.JWT_SECRET)) as {
+//     id: string | undefined
+//   }
+//   if (!decode?.id) {
+//     c.status(401)
+//     return c.text('Token not verified')
+//   }
 
-  try {
-    const savedBlogs = await prisma.savedPost.findMany({
-      where: { userId: decode.id },
-      include: { post: true } // Include post details if needed
-    })
+//   try {
+//     const savedBlogs = await prisma.savedPost.findMany({
+//       where: { userId: decode.id },
+//       include: { post: true } // Include post details if needed
+//     })
 
-    return c.json(savedBlogs)
-  } catch (e) {
-    c.status(411)
-    return c.json({
-      message: 'Error while fetching blog post'
-    })
-  }
-})
+//     return c.json(savedBlogs)
+//   } catch (e) {
+//     c.status(411)
+//     return c.json({
+//       message: 'Error while fetching blog post'
+//     })
+//   }
+// })
 
 blogRoute.get('/bookmarkstatus/:id', async c => {
   const prisma = new PrismaClient({

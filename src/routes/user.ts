@@ -145,6 +145,75 @@ userRoute.get('/details', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
+  let check
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader) {
+    c.status(401)
+    return c.text('Token not available')
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+  let decode: { id: string } | null = null
+  try {
+    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string }
+   
+  } catch (e) {
+    console.error('Token verification failed', e)
+    c.status(500)
+    return c.text('Token not verified')
+  }
+
+  const queryUserId = c.req.query('authorId')
+
+  let userId: string
+  if (queryUserId) {
+    if(queryUserId === decode.id){
+    userId =  decode.id 
+    check = true
+    }else{
+      userId =   queryUserId
+      check = false
+    }
+  } else {
+    userId =   decode.id
+    
+  }
+
+  try {
+    console.log(`Fetching data for userId: ${userId}`)
+    const userData = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        email: true,
+        blogName: true,
+        profilePicture: true,
+        bio: true,
+        location: true,
+        coverpicture: true,
+      }
+    })
+
+    if (!userData) {
+      c.status(404)
+      return c.text('User not found')
+    }
+
+    return c.json({userData,isCurrentUser: check})
+  } catch (e) {
+    console.error('Database error:', e)
+    c.status(500)
+    return c.text('Error while fetching user details from the database')
+  }
+})
+
+//  get all the saved blogs
+
+
+userRoute.get('/savedblogs', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
 
   const authHeader = c.req.header('Authorization') // Get Authorization header
   if (!authHeader) {
@@ -158,7 +227,7 @@ userRoute.get('/details', async c => {
   let decode: { id: string } | null = null
   try {
     decode = (await verify(token, c.env.JWT_SECRET)) as { id: string } // Decode the token
-    console.log('Token decoded successfully')
+    console.log('Token decoded successfully, saved blog')
   } catch (e) {
     console.error('Token verification failed', e) // Log error for debugging
     c.status(500)
@@ -172,32 +241,67 @@ userRoute.get('/details', async c => {
   }
 
   try {
-    console.log(`Fetching data for userId: ${userId}`)
+    console.log(`Fetching saved blogs
+      : ${userId}`)
 
     // Fetch user data from the database
-    const userData = await prisma.user.findUnique({
+    const saved = await prisma.user.findUnique({
       where: { id: userId },
       select: {
-        name: true,
-        email: true,
-        blogName: true,
-        profilePicture: true
-      }
-    })
+        savedPosts: {
+          select: {
+            post: {
+              select:{
 
+               // Assuming `post` is the relation field for saved posts
+              id: true,
+              title: true,
+              content: false,
+              authorId:true,
+              author:{
+                select:{
+                  name:true
+                }
+              },
+              url: true,
+            },
+          },
+          },
+        },
+      },
+    })
+    // const extractedBlogs = savedBlogs?.savedPosts.map((savedPost)=> savedPost.post)
     // Check if user exists
-    if (!userData) {
+    if (!saved) {
       c.status(404)
       return c.text('User not found')
     }
+    // console.log("actual saved blogs "  +savedBlogs)
+  //  console.log("Saved blog extracted post ethe show honiya" + savedBlogs)
+  console.log(saved.savedPosts)
+  
+  
+  // first i was sending these but getting object on frontend
+    // return c.json({
+    //   saved: saved.savedPosts
+    // }) // Send user data as response
 
-    return c.json(userData) // Send user data as response
+
+    // getting savedPost object from the backend, mapping all the blog array to savedPost and sending to the frontend 
+  return c.json(saved.savedPosts.map((savedPost) => savedPost.post));
+  
   } catch (e) {
     console.error('Database error:', e) // Log error for debugging
     c.status(500)
     return c.text('Error while fetching user details from the database')
   }
 })
+
+
+
+
+
+
 
 
 //  update the image 
@@ -253,6 +357,61 @@ catch(e){
 
 })
 
+userRoute.put('/update-cover-picture', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+   
+  const body = await c.req.json()
+  const token = c.req.header('authorization') 
+  if(!token){
+    c.status(401)
+    return c.text("Token not found")
+  }
+  
+  // const decode = await verify(token, c.env.JWT_SECRET)
+
+  const decode = await verify(token, c.env.JWT_SECRET) as { id: string | undefined };
+
+       if (!decode?.id) {
+  c.status(411);
+  return c.text('Token not verified or ID missing');
+} 
+  // if(!decode){
+  //   c.status(411)
+  //   return c.text('Token not verified')
+  // }
+  console.log(body.coverpicture)
+  try{
+    console.log("entered the try block")
+  const response = await prisma.user.update({
+    where:{
+    id:decode.id
+    },
+    data:{
+      coverpicture:body.coverpicture
+    }
+  })
+  return c.json( {
+    success:true,
+    user: response
+  })
+}
+catch(e){
+  c.status(500)
+  return c.json({
+    success: false,
+    message: 'Server / Database Error'
+  })
+}
+
+
+})
+
+
+
+
+
 userRoute.put('/update-user-info', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
@@ -284,6 +443,8 @@ userRoute.put('/update-user-info', async c => {
   if(body.name) updatedData.name = body.name;
   if(body.email) updatedData.email = body.email;
   if(body.blogName) updatedData.blogName = body.blogName;
+  if(body.bio) updatedData.bio = body.bio;
+  if(body.location) updatedData.location = body.location;
   
 if(Object.keys(updatedData).length === 0){
   c.status(401);
