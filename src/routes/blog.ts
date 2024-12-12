@@ -122,7 +122,46 @@ blogRoute.get('/bulk', async c => {
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
+  // const authorId = c.req.query('authorId');  // Retrieving authorId query parameter
+  const authHeader = c.req.header('Authorization');
+  let decode: { id: string } | null = null;
+  // let userId;
+  
+  // Check if Authorization header is available
+  if (!authHeader) {
+    c.status(401);
+    return c.text('Token not available');
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+
   try {
+    // Decode the token and extract user info
+    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string };
+  } catch (e) {
+    console.error('Token verification failed', e);
+    c.status(500);
+    return c.text('Token not verified');
+  }
+
+  // Determine the userId based on the authorId query or logged-in user
+  // if (authorId) {
+  //   if (authorId === decode.id) {
+  //     // If authorId matches the logged-in user, fetch the user's own posts
+  //     userId = decode.id;
+  //   } else {
+  //     // Otherwise, fetch posts for the specified author
+  //     userId = authorId;
+  //   }
+  // } else {
+  //   // If no authorId, fetch posts for the logged-in user
+  //   userId = decode.id;
+  // }
+
+  // console.log(`Fetching posts for userId: ${userId}`);
+
+  try {
+    // Fetch the posts based on the determined userId
     const posts = await prisma.post.findMany({
       select: {
         content: true,
@@ -131,22 +170,99 @@ blogRoute.get('/bulk', async c => {
         url: true,
         author: {
           select: {
-            name: true
+            name: true,
           }
         }
       }
-    })
+    });
+
     return c.json({
       posts
-    })
-    console.log('completed the fetch from the blogs')
+    });
   } catch (e) {
-    c.status(411)
+    c.status(411);
     return c.json({
-      message: 'Error while fetching blogs'
-    })
+      message: 'Error while fetching blogs',
+    });
   }
-})
+});
+
+blogRoute.get('/posts', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+
+  const authorId = c.req.query('authorId');  // Retrieving authorId query parameter
+  const authHeader = c.req.header('Authorization');
+  let decode: { id: string } | null = null;
+  let userId;
+  
+  // Check if Authorization header is available
+  if (!authHeader) {
+    c.status(401);
+    return c.text('Token not available');
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+
+  try {
+    // Decode the token and extract user info
+    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string };
+  } catch (e) {
+    console.error('Token verification failed', e);
+    c.status(500);
+    return c.text('Token not verified');
+  }
+
+  // Determine the userId based on the authorId query or logged-in user
+  if (authorId) {
+    if (authorId === decode.id) {
+      // If authorId matches the logged-in user, fetch the user's own posts
+      userId = decode.id;
+    } else {
+      // Otherwise, fetch posts for the specified author
+      userId = authorId;
+    }
+  } else {
+    // If no authorId, fetch posts for the logged-in user
+    userId = decode.id;
+  }
+
+  console.log(`Fetching posts for userId: ${userId}`);
+
+  try {
+    // Fetch the posts based on the determined userId
+    const posts = await prisma.post.findMany({
+      where: {
+        authorId: userId,  // Filtering posts by authorId
+      },
+      select: {
+        content: true,
+        title: true,
+        id: true,
+        url: true,
+        author: {
+          select: {
+            name: true,
+          }
+        }
+      }
+    });
+
+    return c.json({
+      posts
+    });
+  } catch (e) {
+    c.status(411);
+    return c.json({
+      message: 'Error while fetching blogs',
+    });
+  }
+});
+
+
+
+
 
 blogRoute.get('/:id', async c => {
   const prisma = new PrismaClient({
