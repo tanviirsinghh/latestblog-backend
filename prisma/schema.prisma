@@ -44,7 +44,7 @@ model Like {
   postId   String 
   userId   String
   post     Post@relation(fields: [postId], references: [id])
-  user     User @relation(fields: [userId], references: [id],onDelete: Cascade) //onDelete show delete the likes if post gets deleted
+  user     User @relation(fields: [userId], references: [id],onDelete: Cascade) //onDelete - delete the likes if post gets deleted
   @@unique([postId, userId])
 
 }

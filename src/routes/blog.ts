@@ -300,7 +300,7 @@ blogRoute.post('/:id/like', async c =>{
   
     const postId = c.req.param('id');
        const token = c.req.header('authorization')
-       
+
   if (!token) {
     c.status(401)
     return c.text('Token not found')
@@ -318,23 +318,84 @@ blogRoute.post('/:id/like', async c =>{
   const userId = decode.id
   
     // Check if already liked
-    const existingLike = await prisma.like.findUnique({
-      where: { postId_userId: { postId, userId } }
-    });
+    // const existingLike = await prisma.like.findUnique({
+    //   where: { postId_userId: { postId, userId } }
+    // });
   
-    if (existingLike){
-      c.status(400) 
-       return c.text( 'Already liked' );
-    } 
-  
+    // if (existingLike){
+    //   c.status(400) 
+    //    return c.text( 'Already liked' );
+    // } 
+  try{
     // Create a like
     const response = await prisma.like.create({
       data: { postId, userId }
     });
-  
-    return c.json({ response, message: 'Post liked successfully' });
+    return c.json({ response, message: 'Post Liked' });
+
+    } catch (e) {
+      c.status(411)
+      return c.json({
+        message: 'Error while Liking the post '
+      })
+    }
+    
   });
   
+
+  blogRoute.post('/:id/likeremove', async c =>{
+    const prisma = new PrismaClient({
+      datasourceUrl: c.env.DATABASE_URL
+    }).$extends(withAccelerate())
+     
+    
+      const postId = c.req.param('id');
+         const token = c.req.header('authorization')
+  
+    if (!token) {
+      c.status(401)
+      return c.text('Token not found')
+    }
+    console.log('token aagya')
+  
+    const decode = (await verify(token, c.env.JWT_SECRET)) as {
+      id: string | undefined
+    }
+  
+    if (!decode?.id) {
+      c.status(411)
+      return c.text('Token not verified or ID missing')
+    }  // Decode token to get userId
+    const userId = decode.id
+    
+      // Check if already liked
+      
+      try {
+      // Create a like
+      const response = await prisma.like.delete({
+        where: {
+        postId_userId:{
+          postId,
+          userId
+        }
+        
+        }
+      });
+      return c.json({ response, message: 'Like Removed' });
+
+    } catch (e) {
+      c.status(411)
+      return c.json({
+        message: 'Error while removing Like '
+      })
+    }
+    
+    });
+    
+    
+
+
+
 
 blogRoute.post('/saveblog', async c => {
   const prisma = new PrismaClient({
