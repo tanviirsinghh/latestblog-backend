@@ -292,12 +292,18 @@ blogRoute.get('/:id', async c => {
     })
   }
 })
+blogRoute.post('/:id/like', async c =>{
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+   
 
+})
 blogRoute.post('/saveblog', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
-  console.log('backend')
+  
   const body = await c.req.json()
 
   const token = c.req.header('authorization')
