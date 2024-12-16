@@ -373,12 +373,12 @@ blogRoute.post('/:id/likeremove', async c => {
 
   try {
     // Create a like
-    const removed = await prisma.like.deleteMany({
+    const removed = await prisma.like.delete({
       where: { 
-       
+        postId_userId: {
            postId,
            userId 
-          
+          } 
         }
     })
 
