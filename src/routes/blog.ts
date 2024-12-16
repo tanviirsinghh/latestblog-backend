@@ -297,8 +297,45 @@ blogRoute.post('/:id/like', async c =>{
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
    
+  
+    const postId = c.req.param('id');
+       const token = c.req.header('authorization')
+       
+  if (!token) {
+    c.status(401)
+    return c.text('Token not found')
+  }
+  console.log('token aagya')
 
-})
+  const decode = (await verify(token, c.env.JWT_SECRET)) as {
+    id: string | undefined
+  }
+
+  if (!decode?.id) {
+    c.status(411)
+    return c.text('Token not verified or ID missing')
+  }  // Decode token to get userId
+  const userId = decode.id
+  
+    // Check if already liked
+    const existingLike = await prisma.like.findUnique({
+      where: { postId_userId: { postId, userId } }
+    });
+  
+    if (existingLike){
+      c.status(400) 
+       return c.text( 'Already liked' );
+    } 
+  
+    // Create a like
+    const response = await prisma.like.create({
+      data: { postId, userId }
+    });
+  
+    return c.json({ response, message: 'Post liked successfully' });
+  });
+  
+
 blogRoute.post('/saveblog', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
