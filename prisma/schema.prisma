@@ -9,53 +9,49 @@ datasource db {
 }
 
 model User {
-  id             String  @id @default(uuid())
-  email          String  @unique
+  id             String      @id @default(uuid())
+  email          String      @unique
   name           String?
   password       String
   blogName       String?
   profilePicture String?
-  linkedin        String?
-  github          String?
-  Twitter         String?
-  location         String?
-  bio             String?
-  coverpicture     String?
+  Twitter        String?
+  bio            String?
+  coverpicture   String?
+  github         String?
+  linkedin       String?
+  location       String?
+  likes          Like[]
   posts          Post[]
   savedPosts     SavedPost[]
-  likes          Like[]
-  
 }
 
 model Post {
-  id        String  @id @default(uuid())
-  title     String
-  content   String
-  published Boolean @default(false)
-  authorId  String
-  url       String?
-  author    User    @relation(fields: [authorId], references: [id])
-  savedPosts   SavedPost[]
-  like      Like[]
+  id         String      @id @default(uuid())
+  title      String
+  content    String
+  published  Boolean     @default(false)
+  authorId   String
+  url        String?
+  like       Like[]
+  author     User        @relation(fields: [authorId], references: [id])
+  savedPosts SavedPost[]
 }
 
 model Like {
-  id       String @id @default(uuid()) 
-  postId   String 
-  userId   String
-  post     Post@relation(fields: [postId], references: [id])
-  user     User @relation(fields: [userId], references: [id],onDelete: Cascade) //onDelete - delete the likes if post gets deleted
+  id     String @id @default(uuid())
+  postId String
+  userId String
+  post   Post   @relation(fields: [postId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([postId, userId])
-
-}
-model SavedPost{
-  id       String @id @default(uuid())
-  userId   String  // connected through the User table
-  postId   String  // connected through the Post
-  user     User @relation(fields:[userId], references: [id])
-  post     Post @relation(fields: [postId], references: [id])
 }
 
-
-
-
+model SavedPost {
+  id     String @id @default(uuid())
+  userId String
+  postId String
+  post   Post   @relation(fields: [postId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}

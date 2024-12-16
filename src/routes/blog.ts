@@ -123,25 +123,25 @@ blogRoute.get('/bulk', async c => {
   }).$extends(withAccelerate())
 
   // const authorId = c.req.query('authorId');  // Retrieving authorId query parameter
-  const authHeader = c.req.header('Authorization');
-  let decode: { id: string } | null = null;
+  const authHeader = c.req.header('Authorization')
+  let decode: { id: string } | null = null
   // let userId;
-  
+
   // Check if Authorization header is available
   if (!authHeader) {
-    c.status(401);
-    return c.text('Token not available');
+    c.status(401)
+    return c.text('Token not available')
   }
 
-  const token = authHeader.replace('Bearer ', '');
+  const token = authHeader.replace('Bearer ', '')
 
   try {
     // Decode the token and extract user info
-    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string };
+    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string }
   } catch (e) {
-    console.error('Token verification failed', e);
-    c.status(500);
-    return c.text('Token not verified');
+    console.error('Token verification failed', e)
+    c.status(500)
+    return c.text('Token not verified')
   }
 
   // Determine the userId based on the authorId query or logged-in user
@@ -170,71 +170,71 @@ blogRoute.get('/bulk', async c => {
         url: true,
         author: {
           select: {
-            name: true,
+            name: true
           }
         }
       }
-    });
+    })
 
     return c.json({
       posts
-    });
+    })
   } catch (e) {
-    c.status(411);
+    c.status(411)
     return c.json({
-      message: 'Error while fetching blogs',
-    });
+      message: 'Error while fetching blogs'
+    })
   }
-});
+})
 
 blogRoute.get('/posts', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
-  const authorId = c.req.query('authorId');  // Retrieving authorId query parameter
-  const authHeader = c.req.header('Authorization');
-  let decode: { id: string } | null = null;
-  let userId;
-  
+  const authorId = c.req.query('authorId') // Retrieving authorId query parameter
+  const authHeader = c.req.header('Authorization')
+  let decode: { id: string } | null = null
+  let userId
+
   // Check if Authorization header is available
   if (!authHeader) {
-    c.status(401);
-    return c.text('Token not available');
+    c.status(401)
+    return c.text('Token not available')
   }
 
-  const token = authHeader.replace('Bearer ', '');
+  const token = authHeader.replace('Bearer ', '')
 
   try {
     // Decode the token and extract user info
-    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string };
+    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string }
   } catch (e) {
-    console.error('Token verification failed', e);
-    c.status(500);
-    return c.text('Token not verified');
+    console.error('Token verification failed', e)
+    c.status(500)
+    return c.text('Token not verified')
   }
 
   // Determine the userId based on the authorId query or logged-in user
   if (authorId) {
     if (authorId === decode.id) {
       // If authorId matches the logged-in user, fetch the user's own posts
-      userId = decode.id;
+      userId = decode.id
     } else {
       // Otherwise, fetch posts for the specified author
-      userId = authorId;
+      userId = authorId
     }
   } else {
     // If no authorId, fetch posts for the logged-in user
-    userId = decode.id;
+    userId = decode.id
   }
 
-  console.log(`Fetching posts for userId: ${userId}`);
+  console.log(`Fetching posts for userId: ${userId}`)
 
   try {
     // Fetch the posts based on the determined userId
     const posts = await prisma.post.findMany({
       where: {
-        authorId: userId,  // Filtering posts by authorId
+        authorId: userId // Filtering posts by authorId
       },
       select: {
         content: true,
@@ -243,24 +243,22 @@ blogRoute.get('/posts', async c => {
         url: true,
         author: {
           select: {
-            name: true,
+            name: true
           }
         }
       }
-    });
+    })
 
     return c.json({
       posts
-    });
+    })
   } catch (e) {
-    c.status(411);
+    c.status(411)
     return c.json({
-      message: 'Error while fetching blogs',
-    });
+      message: 'Error while fetching blogs'
+    })
   }
-});
-
-
+})
 
 blogRoute.get('/:id', async c => {
   const prisma = new PrismaClient({
@@ -293,14 +291,13 @@ blogRoute.get('/:id', async c => {
   }
 })
 
-blogRoute.post('/:id/like', async c =>{
+blogRoute.post('/:id/like', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
-   
-  
-    const postId = c.req.param('id');
-       const token = c.req.header('authorization')
+
+  const postId = c.req.param('id')
+  const token = c.req.header('authorization')
 
   if (!token) {
     c.status(401)
@@ -315,108 +312,134 @@ blogRoute.post('/:id/like', async c =>{
   if (!decode?.id) {
     c.status(411)
     return c.text('Token not verified or ID missing')
-  }  // Decode token to get userId
+  } // Decode token to get userId
   const userId = decode.id
-  
-    // Check if already liked
-    // const existingLike = await prisma.like.findUnique({
-    //   where: { postId_userId: { postId, userId } }
-    // });
-  
-    // if (existingLike){
-    //   c.status(400) 
-    //    return c.text( 'Already liked' );
-    // } 
-  try{
+
+  // Check if already liked
+  const existingLike = await prisma.like.findUnique({
+    where: { postId_userId: { postId, userId } }
+  })
+  if (existingLike) {
+    console.log('already liked in backend' + existingLike)
+    c.status(400)
+    return c.text('Already liked')
+  }
+  try {
     // Create a like
     const response = await prisma.like.create({
       data: { postId, userId }
-    });
-    return c.json({ response, message: 'Post Liked' });
+    })
+    return c.json({ response, message: 'Post Liked' })
+  } catch (e) {
+    c.status(411)
+    return c.json({
+      message: 'Error while Liking the post '
+    })
+  }
+})
 
-    } catch (e) {
-      c.status(411)
-      return c.json({
-        message: 'Error while Liking the post '
-      })
-    }
-    
-  });
-  
+blogRoute.post('/:id/likeremove', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
 
-  blogRoute.post('/:id/likeremove', async c =>{
-    const prisma = new PrismaClient({
-      datasourceUrl: c.env.DATABASE_URL
-    }).$extends(withAccelerate())
-     
-    
-      const blogId = c.req.param('id');
-         const token = c.req.header('authorization')
-  
-    if (!token) {
-      c.status(401)
-      return c.text('Token not found')
-    }
-  
-    const decode = (await verify(token, c.env.JWT_SECRET)) as {
-      id: string | undefined
-    }
-  
-    if (!decode?.id) {
-      c.status(411)
-      return c.text('Token not verified or ID missing')
-    }  // Decode token to get userId
-    const userId = decode.id
-    
-      // Check if already liked
-    
-      try {
-      // Create a like
-      const response = await prisma.like.delete({
-        where: { postId_userId: { postId: blogId, userId: userId } }
+  const postId = c.req.param('id')
+  const token = c.req.header('authorization')
 
-      
-      });
-      return c.json({ response, message: 'Like Removed' });
+  if (!token) {
+    c.status(401)
+    return c.text('Token not found')
+  }
 
-    } catch (e) {
-      c.status(411)
-      return c.json({
-        message: 'Error while removing Like '
-      })
-    }
-    
-    });
-    
-    blogRoute.get('/:id/postlikes', async c => {
-      const prisma = new PrismaClient({
-        datasourceUrl: c.env.DATABASE_URL
-      }).$extends(withAccelerate())
-      const postId = c.req.param('id')
-      try {
-        const post = await prisma.like.count({
-          where: {
-             postId: postId
+  const decode = (await verify(token, c.env.JWT_SECRET)) as {
+    id: string | undefined
+  }
 
-          }
-        })
-        return c.json(post)
-      } catch (e) {
-        c.status(411)
-        return c.json({
-          message: 'Error while fetching blog post'
-        })
-      }
+  if (!decode?.id) {
+    c.status(411)
+    return c.text('Token not verified or ID missing')
+  } // Decode token to get userId
+  const userId = decode.id
+
+  // Check if already liked
+
+  try {
+    // Create a like
+    const removed = await prisma.like.delete({
+      where: { postId_userId: { postId, userId } }
     })
 
+    return c.json({ removed, message: 'Like Removed' })
+  } catch (e) {
+    c.status(403)
+    return c.json({
+      message: 'Error while removing Like '
+    })
+  }
+})
+blogRoute.get('/:id/likestatus', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+  const postId = c.req.param('id')
+  const token = c.req.header('authorization')
+  if (!token) {
+    c.status(401)
+    return c.text('Token not found')
+  }
 
+  const decode = (await verify(token, c.env.JWT_SECRET)) as {
+    id: string | undefined
+  }
 
+  if (!decode?.id) {
+    c.status(411)
+    return c.text('Token not verified or ID missing')
+  }
+  const userId = decode.id
+  console.log("backend fetch like status id checkS" + postId,userId )
+
+  try {
+    const existingLike = await prisma.like.findUnique({
+      where: {
+        postId_userId: { postId, userId }
+      }
+    })
+    return c.json(existingLike)
+  } catch (e) {
+    c.status(411)
+    return c.json({
+      message: 'Error while fetching like status'
+    })
+  }
+})
+
+blogRoute.get('/:id/postlikes', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+  const postId = c.req.param('id')
+
+  try {
+    const post = await prisma.like.count({
+      where: {
+        postId: postId
+      }
+    })
+    return c.json(post)
+  } catch (e) {
+    c.status(411)
+    return c.json({
+      message: 'Error while fetching blog post'
+    })
+  }
+})
 
 blogRoute.post('/saveblog', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
-  
+
   const body = await c.req.json()
 
   const token = c.req.header('authorization')
