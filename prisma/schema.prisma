@@ -23,6 +23,7 @@ model User {
   coverpicture     String?
   posts          Post[]
   savedPosts     SavedPost[]
+  likes          Like[]
   
 }
 
@@ -35,8 +36,18 @@ model Post {
   url       String?
   author    User    @relation(fields: [authorId], references: [id])
   savedPosts   SavedPost[]
+  like      Like[]
 }
 
+model Like {
+  id       String @id @default(uuid()) 
+  postId   String 
+  userId   String
+  post     Post@relation(fields: [postId], references: [id])
+  user     User @relation(fields: [userId], references: [id],onDelete: Cascade) //onDelete show delete the likes if post gets deleted
+  @@unique([postId, userId])
+
+}
 model SavedPost{
   id       String @id @default(uuid())
   userId   String  // connected through the User table
@@ -44,4 +55,7 @@ model SavedPost{
   user     User @relation(fields:[userId], references: [id])
   post     Post @relation(fields: [postId], references: [id])
 }
+
+
+
 

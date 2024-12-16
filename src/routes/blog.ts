@@ -262,8 +262,6 @@ blogRoute.get('/posts', async c => {
 
 
 
-
-
 blogRoute.get('/:id', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
