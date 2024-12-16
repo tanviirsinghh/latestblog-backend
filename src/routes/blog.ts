@@ -316,20 +316,28 @@ blogRoute.post('/:id/like', async c => {
   const userId = decode.id
 
   // Check if already liked
-  const existingLike = await prisma.like.findUnique({
-    where: { postId_userId: { postId, userId } }
-  })
-  if (existingLike) {
-    console.log('already liked in backend' + existingLike)
-    c.status(400)
-    return c.text('Already liked')
-  }
+  // const existingLike = await prisma.like.findUnique({
+  //   where: { postId_userId: { postId, userId } }
+  // })
+  // if (existingLike) {
+  //   console.log('already liked in backend' + existingLike)
+  //   c.status(400)
+  //   return c.text('Already liked')
+  // }
   try {
     // Create a like
     const response = await prisma.like.create({
-      data: { postId, userId }
+      data: {
+         postId, 
+         userId 
+        }
     })
-    return c.json({ response, message: 'Post Liked' })
+
+    return c.json({ 
+      isLiked:true,
+       message: 'Post Liked' 
+      })
+
   } catch (e) {
     c.status(411)
     return c.json({
@@ -350,7 +358,7 @@ blogRoute.post('/:id/likeremove', async c => {
     c.status(401)
     return c.text('Token not found')
   }
-
+    
   const decode = (await verify(token, c.env.JWT_SECRET)) as {
     id: string | undefined
   }
@@ -359,25 +367,34 @@ blogRoute.post('/:id/likeremove', async c => {
     c.status(411)
     return c.text('Token not verified or ID missing')
   } // Decode token to get userId
-  const userId = decode.id
-
+  const userId = decode.id 
+  
   // Check if already liked
 
   try {
     // Create a like
-    const removed = await prisma.like.delete({
-      where: { postId_userId: { postId, userId } }
+    const removed = await prisma.like.deleteMany({
+      where: { 
+       
+           postId,
+           userId 
+          
+        }
     })
 
-    return c.json({ removed, message: 'Like Removed' })
-  } catch (e) {
+ return c.json({ 
+      isLiked:false,
+       message: 'Post Liked' 
+      }) 
+     } 
+     catch (e) {
     c.status(403)
     return c.json({
       message: 'Error while removing Like '
     })
   }
 })
-blogRoute.get('/:id/likestatus', async c => {
+blogRoute.get('/likestatus/:id', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
@@ -402,15 +419,24 @@ blogRoute.get('/:id/likestatus', async c => {
   try {
     const existingLike = await prisma.like.findUnique({
       where: {
-        postId_userId: { postId, userId }
+        postId_userId: { 
+          postId, 
+          userId
+         }
       }
     })
-    return c.json(existingLike)
-  } catch (e) {
+   
+    return c.json({ 
+      isLiked:true,
+       message: 'Post Liked' 
+      })
+      } 
+      catch (e) {
     c.status(411)
-    return c.json({
-      message: 'Error while fetching like status'
-    })
+    return c.json({ 
+      isLiked:false,
+       message: 'Error fetching' 
+      })
   }
 })
 
@@ -419,14 +445,14 @@ blogRoute.get('/:id/postlikes', async c => {
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
   const postId = c.req.param('id')
-
+  
   try {
-    const post = await prisma.like.count({
+    const likeCount = await prisma.like.count({
       where: {
         postId: postId
       }
     })
-    return c.json(post)
+    return c.json(likeCount)
   } catch (e) {
     c.status(411)
     return c.json({
