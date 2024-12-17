@@ -336,6 +336,7 @@ blogRoute.post('/:id/like', async c => {
     })
 
     return c.json({ 
+      
       isLiked:true,
        message: 'Post Liked' 
       })
@@ -463,16 +464,7 @@ blogRoute.get('/:id/postlikes', async c => {
         postId: postId
       }
     })
-    if(likeCount){
-      return c.json(likeCount)
-
-    }else{
-      c.status(401)
-    return c.json({
-      likeCount:0,
-      message: 'No Likes'
-    })
-    }
+      return c.json({likeCount})
     
 
   } catch (e) {
