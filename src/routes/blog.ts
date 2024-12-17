@@ -308,6 +308,8 @@ blogRoute.post('/:id/like', async c => {
   const decode = (await verify(token, c.env.JWT_SECRET)) as {
     id: string | undefined
   }
+  console.log('likre api backend token' + decode)
+
 
   if (!decode?.id) {
     c.status(411)
@@ -346,14 +348,14 @@ blogRoute.post('/:id/like', async c => {
   }
 })
 
-blogRoute.post('/:id/likeremove', async c => {
+blogRoute.delete('/:id/likeremove', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
   const postId = c.req.param('id')
   const token = c.req.header('authorization')
-
+ console.log('enter remove like')
   if (!token) {
     c.status(401)
     return c.text('Token not found')
@@ -362,12 +364,13 @@ blogRoute.post('/:id/likeremove', async c => {
   const decode = (await verify(token, c.env.JWT_SECRET)) as {
     id: string | undefined
   }
-
+  console.log("remove like token check"+ decode)
   if (!decode?.id) {
     c.status(411)
     return c.text('Token not verified or ID missing')
   } // Decode token to get userId
   const userId = decode.id 
+  
   
   // Check if already liked
 
@@ -381,12 +384,13 @@ blogRoute.post('/:id/likeremove', async c => {
           } 
         }
     })
-
+   if(removed){
  return c.json({ 
       isLiked:false,
-       message: 'Post Liked' 
+       message: 'Post Liked removed' 
       }) 
      } 
+    }
      catch (e) {
     c.status(403)
     return c.json({
@@ -425,12 +429,19 @@ blogRoute.get('/likestatus/:id', async c => {
          }
       }
     })
-   
+   if(existingLike){
     return c.json({ 
       isLiked:true,
        message: 'Post Liked' 
       })
       } 
+    else{
+      return c.json({ 
+        isLiked:false,
+         message: 'Not liked' 
+        })
+    }
+  }
       catch (e) {
     c.status(411)
     return c.json({ 
@@ -452,7 +463,18 @@ blogRoute.get('/:id/postlikes', async c => {
         postId: postId
       }
     })
-    return c.json(likeCount)
+    if(likeCount){
+      return c.json(likeCount)
+
+    }else{
+      c.status(401)
+    return c.json({
+      likeCount:0,
+      message: 'No Likes'
+    })
+    }
+    
+
   } catch (e) {
     c.status(411)
     return c.json({
@@ -570,7 +592,7 @@ blogRoute.get('/bookmarkstatus/:id', async c => {
           isBookmarked: false,
           message: 'Blog not found'
         },
-        404
+        
       )
     }
 
@@ -589,7 +611,7 @@ blogRoute.get('/bookmarkstatus/:id', async c => {
         isBookmarked: false,
         message: 'Error while fetching blog post'
       },
-      500
+      404
     )
   }
 })
