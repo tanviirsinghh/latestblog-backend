@@ -24,6 +24,7 @@ model User {
   likes          Like[]
   posts          Post[]
   savedPosts     SavedPost[]
+  comments       Comment[]
 }
 
 model Post {
@@ -36,6 +37,7 @@ model Post {
   like       Like[]
   author     User        @relation(fields: [authorId], references: [id])
   savedPosts SavedPost[]
+  comment    Comment[]
 }
 
 model Like {
@@ -44,7 +46,32 @@ model Like {
   userId String
   post   Post   @relation(fields: [postId], references: [id])
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([postId, userId])
+}
+
+// model Comment {
+//   id                 String @id @default(uuid())
+//   userId             String
+//   userName           String
+//   userProfilePicture String
+//   postId             String
+//   timestamp          String
+//   comment            String
+//   user               User   @relation(fields: [userId], references: [id])
+//   post               Post   @relation(fields: [postId], references: [id])
+// }
+
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+  content   String   // Renamed from "comment"
+  timestamp DateTime // Changed from String to DateTime
+
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
 }
 
 model SavedPost {
