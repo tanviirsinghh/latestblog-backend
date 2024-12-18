@@ -699,18 +699,88 @@ blogRoute.post('/:id/comment', async c => {
         postId: blogId
       }
     })
-    if(post){
-      c.status(200)
-      return c.json({
-        post,
-        msg: "Comment Posted"
-      })
-    }
+    
+      return c.json(
+        
+          post
+        
+        
+      )
+    
     
   } catch (e) {
     c.status(500)
     return c.json({
       msg: 'Internal Server Error'
     })
+  }
+})
+
+blogRoute.get('/:id/comments', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+            
+  const postId = c.req.param('id')
+  const token = c.req.header('authorization')
+  if (!token) {
+    c.status(401)
+    return c.text('Token not found')
+  }
+
+  const decode = (await verify(token, c.env.JWT_SECRET)) as {
+    id: string | undefined
+  }
+
+  if (!decode?.id) {
+    c.status(411)
+    return c.text('Token not verified or ID missing')
+  }
+  try {
+     // Extract post ID from route parameter
+    const comments = await prisma.comment.findMany({
+      where: {
+        postId: postId,
+       
+      },include:{
+        user:{
+          select:{
+            name:true, 
+            profilePicture:true,
+            id:true,
+          }
+        }
+      }
+      // Check if the blog exists by ID
+    })
+
+    if (!comments) {
+      // Blog not found
+      return c.json(
+        {
+          
+          message: 'No Comments'
+        },
+        404
+      )
+    }
+
+    // Blog found
+    return c.json(
+      {
+        
+        comments
+      },
+      200
+    )
+  } catch (e) {
+    // Handle errors like database connection issues
+    return c.json(
+      {
+        
+        message: 'Error while fetching comments'
+      },
+      411
+    )
   }
 })
