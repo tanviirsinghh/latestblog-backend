@@ -663,3 +663,54 @@ blogRoute.delete('/removesavedblog/:id', async c => {
     })
   }
 })
+
+
+blogRoute.post('/:id/comment', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+
+  console.log('entered backend comment api')
+
+  const blogId = c.req.param('id')
+  const body = await c.req.json()
+  const token = c.req.header('authorization')
+  if (!token) {
+    c.status(401)
+    return c.text('Token not found')
+  }
+
+  const decode = (await verify(token, c.env.JWT_SECRET)) as {
+    id: string | undefined
+  }
+
+  if (!decode?.id) {
+    c.status(411)
+    return c.text('Token not verified or ID missing')
+  }
+ 
+  console.log('try block of create blog')
+  try {
+    const post = await prisma.comment.create({
+      data: {
+        content: body.content,
+        timestamp: body.timestamp,
+        userId : decode.id,
+        postId: blogId
+      }
+    })
+    if(post){
+      c.status(200)
+      return c.json({
+        post,
+        msg: "Comment Posted"
+      })
+    }
+    
+  } catch (e) {
+    c.status(500)
+    return c.json({
+      msg: 'Internal Server Error'
+    })
+  }
+})
