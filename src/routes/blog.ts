@@ -2,9 +2,11 @@ import { Prisma, PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { createBlogInput, updateBlogInput } from '@tanviirsinghh/medium-common'
 import { Hono } from 'hono'
+// import {UpdateBlogInput}  from '../../../common/dist/index.js'
 import { jwt, sign, verify } from 'hono/jwt'
 import { JWTPayload } from 'hono/utils/jwt/types'
 // import SavedBlogs from '../../../Blog/src/components/UserProfile.tsx/SavedBlogs'
+// import { UpdateBlogInput } from '../../../common/dist/index';
 
 export const blogRoute = new Hono<{
   Bindings: {
@@ -88,12 +90,14 @@ blogRoute.post('/', async c => {
   }
 })
 
-blogRoute.put('/', async c => {
+blogRoute.put('/editedblog/:id', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
-
+  const id =  c.req.param('id')
   const body = await c.req.json()
+  
+  console.log(body)
   const { success } = updateBlogInput.safeParse(body)
   if (!success) {
     c.status(411)
@@ -102,18 +106,51 @@ blogRoute.put('/', async c => {
     })
   }
 
+  const authHeader = c.req.header('Authorization')
+  let decode: { id: string } | null = null
+  // let userId;
+
+  // Check if Authorization header is available
+  if (!authHeader) {
+    c.status(401)
+    return c.text('Token not available')
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+
+  try {
+    // Decode the token and extract user info
+    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string }
+  } catch (e) {
+    console.error('Token verification failed', e)
+    c.status(500)
+    return c.text('Token not verified')
+  }
+
+  console.log("update blog")
+
+  try{
   const post = await prisma.post.update({
     where: {
-      id: body.id
+      id: id
     },
     data: {
       title: body.title,
-      content: body.content
+      content: body.content,
+      id: id,
+      url: body.url,
+
     }
   })
   return c.json({
     id: post.id
   })
+}catch(e){
+  c.status(401)
+  return c.json({
+    message: 'Error while fetching blogs'
+  })
+}
 })
 
 // Might add pagination later
@@ -158,7 +195,6 @@ blogRoute.get('/bulk', async c => {
   //   userId = decode.id;
   // }
 
-  // console.log(`Fetching posts for userId: ${userId}`);
 
   try {
     // Fetch the posts based on the determined userId
@@ -168,6 +204,15 @@ blogRoute.get('/bulk', async c => {
         title: true,
         id: true,
         url: true,
+       
+        _count:{
+          select:{
+            like:true,
+            comment:true,
+            savedPosts:true
+          }
+      },
+
         author: {
           select: {
             name: true
@@ -265,6 +310,30 @@ blogRoute.get('/:id', async c => {
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
   const id = c.req.param('id')
+
+  const authHeader = c.req.header('Authorization')
+  let decode: { id: string } | null = null
+  // let userId;
+
+  // Check if Authorization header is available
+  if (!authHeader) {
+    c.status(401)
+    return c.text('Token not available')
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+
+  try {
+    // Decode the token and extract user info
+    decode = (await verify(token, c.env.JWT_SECRET)) as { id: string }
+  } catch (e) {
+    console.error('Token verification failed', e)
+    c.status(500)
+    return c.text('Token not verified')
+  }
+  const userId = decode.id
+  // const editButton: boolean
+
   try {
     const post = await prisma.post.findFirst({
       where: {
@@ -275,14 +344,28 @@ blogRoute.get('/:id', async c => {
         title: true,
         content: true,
         url: true,
+        authorId:true,
+           _count:{
+          select:{
+            comment:true,
+            like:true
+          }
+        },
         author: {
           select: {
-            name: true
+            name: true,
+            
+            
           }
         }
       }
     })
-    return c.json(post)
+ 
+    if(post?.authorId === userId){
+      return c.json({post, editButton:true})
+    }else{
+      return c.json({post, editButton:false})
+    }
   } catch (e) {
     c.status(411)
     return c.json({
@@ -784,3 +867,27 @@ blogRoute.get('/:id/comments', async c => {
     )
   }
 })
+
+
+// blogRoute.get('/:id/postcommentscount', async c => {
+//   const prisma = new PrismaClient({
+//     datasourceUrl: c.env.DATABASE_URL
+//   }).$extends(withAccelerate())
+//   const postId = c.req.param('id')
+  
+//   try {
+//     const commentCount = await prisma.post.count({
+//       where: {
+//         postId: postId
+//       }
+//     })
+//       return c.json({commentCount})
+    
+
+//   } catch (e) {
+//     c.status(411)
+//     return c.json({
+//       message: 'Error while fetching blog post'
+//     })
+//   }
+// })

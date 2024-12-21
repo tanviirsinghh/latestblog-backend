@@ -4,8 +4,9 @@ import { withAccelerate } from '@prisma/extension-accelerate'
 import { jwt, sign, verify } from 'hono/jwt'
 import { X_HONO_DISABLE_SSG_HEADER_KEY } from 'hono/ssg'
 import { object, string, z } from 'zod'
-import { signinInput, signupInput } from '@tanviirsinghh/medium-common'
+import { signinInput, signupInput,  } from '@tanviirsinghh/medium-common'
 import { User } from '../../../Blog/src/hooks/index';
+import { SigninInput } from '../../../common/dist/index';
 
 export const userRoute = new Hono<{
   Bindings: {
