@@ -152,6 +152,59 @@ blogRoute.put('/editedblog/:id', async c => {
   })
 }
 })
+blogRoute.delete('/deleteblog/:id', async c => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+  console.log('backend')
+  // const body = await c.req.json()
+  const postId = c.req.param('id')
+  if (!postId) {
+    c.status(400)
+    return c.json({ message: 'ID parameter is missing or invalid' })
+  }
+  const token = c.req.header('authorization')
+  if (!token) {
+    c.status(401)
+    return c.text('Token not found')
+  }
+  console.log('token aagya')
+
+  const decode = (await verify(token, c.env.JWT_SECRET)) as {
+    id: string | undefined
+  }
+
+  if (!decode?.id) {
+    c.status(411)
+    return c.text('Token not verified or ID missing')
+  }
+  // if(!decode){
+  console.log('start delete')
+  console.log(postId)
+  try {
+       const response = await prisma.post.delete({
+         where: {
+           id: postId
+      }
+    })
+
+    if(response){
+    return c.json({
+      message: 'Blog Deleted',
+      
+    })
+  }
+  } catch (e) {
+    c.status(500)
+    return c.json({
+      message: 'Error while fetching blog post'
+    })
+  }
+})
+
+
+
+
 
 // Might add pagination later
 blogRoute.get('/bulk', async c => {

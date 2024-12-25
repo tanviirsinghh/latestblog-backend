@@ -34,17 +34,17 @@ model Post {
   published  Boolean     @default(false)
   authorId   String
   url        String?
-  like       Like[]
-  author     User        @relation(fields: [authorId], references: [id])
-  savedPosts SavedPost[]
-  comment    Comment[]
+  like       Like[] 
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  savedPosts SavedPost[] 
+  comment    Comment[] 
 }
 
 model Like {
   id     String @id @default(uuid())
   postId String
   userId String
-  post   Post   @relation(fields: [postId], references: [id])
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
@@ -70,14 +70,14 @@ model Comment {
   content   String   // Renamed from "comment"
   timestamp DateTime // Changed from String to DateTime
 
-  user      User     @relation(fields: [userId], references: [id])
-  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model SavedPost {
   id     String @id @default(uuid())
   userId String
   postId String
-  post   Post   @relation(fields: [postId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
