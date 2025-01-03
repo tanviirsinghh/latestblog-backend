@@ -8,6 +8,7 @@ import { signinInput, signupInput,  } from '@tanviirsinghh/medium-common'
 import { User } from '../../../Blog/src/hooks/index';
 import { SigninInput } from '../../../common/dist/index';
 
+
 export const userRoute = new Hono<{
   Bindings: {
     DATABASE_URL: string
@@ -16,6 +17,8 @@ export const userRoute = new Hono<{
     API_KEY: string
   }
 }>()
+
+const saltRounds = 12 ; // 10 rounds is the default value for bcrypt;
 
 // To restrict a middleware to certain routes, you can use the following -
 
@@ -38,6 +41,7 @@ userRoute.post('/signup', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
+  
 
   console.log('otp check here')
 

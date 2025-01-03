@@ -59,16 +59,17 @@ blogRoute.post('/', async c => {
   console.log('entered backend')
 
   const authorId = c.get('userId')
+
   const body = await c.req.json()
   console.log(body)
-  const { success } = createBlogInput.safeParse(body)
-  console.log(success)
-  if (!success) {
-    c.status(411)
-    return c.json({
-      message: 'Input not correct'
-    })
-  }
+  // const { success } = createBlogInput.safeParse(body)
+  // console.log(JSON.stringify(success))
+  // if (!success) {
+  //   c.status(411)
+  //   return c.json({
+  //     message: 'Input not correct'
+  //   })
+  // }
   console.log('try block of create blog')
   try {
     const post = await prisma.post.create({
@@ -268,7 +269,8 @@ blogRoute.get('/bulk', async c => {
 
         author: {
           select: {
-            name: true
+            name: true,
+            profilePicture:true
           }
         }
       }
