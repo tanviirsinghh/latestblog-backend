@@ -38,6 +38,8 @@ model Post {
   author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   savedPosts SavedPost[] 
   comment    Comment[] 
+  createdAt  DateTime    @default(now())  // Add this field
+
 }
 
 model Like {

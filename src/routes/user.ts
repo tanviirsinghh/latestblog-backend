@@ -18,7 +18,6 @@ export const userRoute = new Hono<{
   }
 }>()
 
-const saltRounds = 12 ; // 10 rounds is the default value for bcrypt;
 
 // To restrict a middleware to certain routes, you can use the following -
 
@@ -50,7 +49,7 @@ userRoute.post('/signup', async c => {
   console.log('request entered backend')
 
   const body = await c.req.json()
-
+       const hashedPassword = await 
   console.log(body)
   console.log('after body')
 
@@ -196,6 +195,7 @@ userRoute.get('/details', async c => {
         bio: true,
         location: true,
         coverpicture: true,
+        posts:true
       }
     })
 

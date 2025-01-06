@@ -273,7 +273,10 @@ blogRoute.get('/bulk', async c => {
             profilePicture:true
           }
         }
-      }
+      },
+      // orderBy: {
+      //   createdAt: 'desc'
+      // }
     })
 
     return c.json({
