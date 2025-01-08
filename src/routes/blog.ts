@@ -27,16 +27,6 @@ blogRoute.use('/*', async (c, next) => {
   const decode = (await verify(verified, c.env.JWT_SECRET)) as JWTPayload
   console.log(decode)
 
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-
   //  this can cause error because this was previously giving error thats why its is assigned string, if keep getting error then remove the string from here
 
   if (decode && typeof decode.id === 'string') {
@@ -927,25 +917,3 @@ blogRoute.get('/:id/comments', async c => {
 })
 
 
-// blogRoute.get('/:id/postcommentscount', async c => {
-//   const prisma = new PrismaClient({
-//     datasourceUrl: c.env.DATABASE_URL
-//   }).$extends(withAccelerate())
-//   const postId = c.req.param('id')
-  
-//   try {
-//     const commentCount = await prisma.post.count({
-//       where: {
-//         postId: postId
-//       }
-//     })
-//       return c.json({commentCount})
-    
-
-//   } catch (e) {
-//     c.status(411)
-//     return c.json({
-//       message: 'Error while fetching blog post'
-//     })
-//   }
-// })

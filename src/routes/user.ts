@@ -42,16 +42,12 @@ userRoute.post('/signup', async c => {
   }).$extends(withAccelerate())
   
 
-  console.log('otp check here')
 
   const apikey = c.env.API_KEY
   const secret = c.env.OTP_SECRET
-  console.log('request entered backend')
 
   const body = await c.req.json()
-       const hashedPassword = await 
-  console.log(body)
-  console.log('after body')
+       
 
   const { success } = signupInput.safeParse(body)
 
@@ -62,20 +58,17 @@ userRoute.post('/signup', async c => {
     })
   }
 
-  console.log('create databse')
   const emailCheck = await prisma.user.findUnique({
     where: {
       email: body.email
     }
   })
-  console.log('fuck')
   if (emailCheck) {
     c.status(403)
     return c.json({
       error: 'Email Already in Use'
     })
   }
-  console.log('fuck')
 
   try {
     const user = await prisma.user.create({
@@ -89,14 +82,12 @@ userRoute.post('/signup', async c => {
         location:body.location,
       }
     })
-    console.log('temporary user created successfully')
 
     //  const otpResponse = await sendOtp({apikey, otp , email})
     // After creating the user, its returns us the user's id
     // which we are using here to sign
     const token = await sign({ id: user.id }, c.env.JWT_SECRET)
     // after signing the JWT will return us a token that we are returning
-    console.log('jwt token ' + token)
     return c.json({
       token
     })
@@ -133,8 +124,7 @@ userRoute.post('/signin', async c => {
       return c.text('user not found / Incorrect creds' )
     }
     const jwt = await sign({ id: user.id }, c.env.JWT_SECRET)
-    console.log('chalda')
-    console.log('here is the returning token' + jwt)
+
     return c.json({
       token : jwt
     })
@@ -184,7 +174,6 @@ userRoute.get('/details', async c => {
   }
 
   try {
-    console.log(`Fetching data for userId: ${userId}`)
     const userData = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -232,7 +221,6 @@ userRoute.get('/savedblogs', async c => {
   let decode: { id: string } | null = null
   try {
     decode = (await verify(token, c.env.JWT_SECRET)) as { id: string } // Decode the token
-    console.log('Token decoded successfully, saved blog')
   } catch (e) {
     console.error('Token verification failed', e) // Log error for debugging
     c.status(500)
@@ -246,8 +234,7 @@ userRoute.get('/savedblogs', async c => {
   }
 
   try {
-    console.log(`Fetching saved blogs
-      : ${userId}`)
+    
 
     // Fetch user data from the database
     const saved = await prisma.user.findUnique({
@@ -281,9 +268,7 @@ userRoute.get('/savedblogs', async c => {
       c.status(404)
       return c.text('User not found')
     }
-    // console.log("actual saved blogs "  +savedBlogs)
-  //  console.log("Saved blog extracted post ethe show honiya" + savedBlogs)
-  console.log(saved.savedPosts)
+   
   
   
   // first i was sending these but getting object on frontend
@@ -331,13 +316,8 @@ userRoute.put('/update-profile-picture', async c => {
   c.status(411);
   return c.text('Token not verified or ID missing');
 } 
-  // if(!decode){
-  //   c.status(411)
-  //   return c.text('Token not verified')
-  // }
-  console.log(body.profilePicture)
+ 
   try{
-    console.log("entered the try block")
   const response = await prisma.user.update({
     where:{
     id:decode.id
@@ -386,9 +366,7 @@ userRoute.put('/update-cover-picture', async c => {
   //   c.status(411)
   //   return c.text('Token not verified')
   // }
-  console.log(body.coverpicture)
   try{
-    console.log("entered the try block")
   const response = await prisma.user.update({
     where:{
     id:decode.id
@@ -421,7 +399,6 @@ userRoute.put('/update-user-info', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
-   console.log('backend')
   const body = await c.req.json()
   const token = c.req.header('authorization') 
   if(!token){
@@ -437,12 +414,8 @@ userRoute.put('/update-user-info', async c => {
   c.status(411);
   return c.text('Token not verified or ID missing');
 } 
-  // if(!decode){
-  //   c.status(411)
-  //   return c.text('Token not verified')
-  // }
-  console.log(body)
-  console.log('backend object de uppper')
+  
+
   const updatedData: Record<string, string> ={}
 
   if(body.name) updatedData.name = body.name;
@@ -456,7 +429,6 @@ if(Object.keys(updatedData).length === 0){
   return c.text('No Valid Fields to Update')
 }
   try{
-    console.log("entered the try block")
   const response = await prisma.user.update({
     where:{
     id:decode.id
@@ -478,3 +450,61 @@ catch(e){
 
 
 })
+
+userRoute.get('/user-stats/:userId', async (c) => {
+
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL
+  }).$extends(withAccelerate())
+
+  const token = c.req.header('authorization') 
+  if(!token){
+    c.status(401)
+    return c.text("Token not found")
+  }
+
+  const decode = await verify(token, c.env.JWT_SECRET) as { id: string | undefined };
+
+       if (!decode?.id) {
+  c.status(411);
+  return c.text('Token not verified or ID missing');
+} 
+
+
+  try {
+    const stats = await prisma.user.findUnique({
+      where: { id: decode.id },
+      select: {
+        _count: {
+          select: { posts: true }  // Count of posts
+        },
+        posts: {
+          select: {
+            _count: {
+              select: {
+                comment: true,
+                like: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!stats) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Calculate total comments and likes
+    const totalComments = stats.posts.reduce((sum, post) => sum + post._count.comment, 0);
+    const totalLikes = stats.posts.reduce((sum, post) => sum + post._count.like, 0);
+
+    return c.json({
+      totalPosts: stats._count.posts,
+      totalComments,
+      totalLikes
+    });
+  } catch (error) {
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
