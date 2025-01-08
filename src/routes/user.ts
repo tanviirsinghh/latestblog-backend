@@ -105,6 +105,8 @@ userRoute.post('/signin', async c => {
   }).$extends(withAccelerate())
 
   const body = await c.req.json()
+  console.log('backend')
+
   const { success } = signinInput.safeParse(body)
   if (!success) {
     c.status(411)
@@ -451,7 +453,7 @@ catch(e){
 
 })
 
-userRoute.get('/user-stats/:userId', async (c) => {
+userRoute.get('/user-stats', async (c) => {
 
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL

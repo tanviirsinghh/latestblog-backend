@@ -338,6 +338,13 @@ blogRoute.get('/posts', async c => {
           select: {
             name: true
           }
+        },
+        _count:{
+          select:{
+            like:true,
+            comment:true,
+            savedPosts:true
+          }
         }
       }
     })
