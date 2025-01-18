@@ -161,6 +161,8 @@ userRoute.get('/details', async c => {
 
   const queryUserId = c.req.query('authorId')
 
+   console.log('backend detail author id te user match krdi ke nhi', queryUserId, decode.id)
+
   let userId: string
   if (queryUserId) {
     if(queryUserId === decode.id){
@@ -194,7 +196,8 @@ userRoute.get('/details', async c => {
       c.status(404)
       return c.text('User not found')
     }
-
+    
+   console.log('user da data userProfile', userData)
     return c.json({userData,isCurrentUser: check})
   } catch (e) {
     console.error('Database error:', e)
