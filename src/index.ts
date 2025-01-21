@@ -15,11 +15,18 @@ const app = new Hono<{
  
   };
 }>();
- 
+ // CORS configuration
+app.use('/*', cors({
+  origin: ['https://latest-blog-nv7mdh52s-tanviirsinghhs-projects.vercel.app','https://latest-blog-git-main-tanviirsinghhs-projects.vercel.app','https://latest-blog-nv7mdh52s-tanviirsinghhs-projects.vercel.app/','https://large-75896.web.app','http://localhost:5173'],
+  allowMethods: ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  maxAge: 86400,
+}));
 
 
 
-app.use('/*', cors())
+// app.use('/*', cors())
 app.route('/api/v1/user', userRoute)
 app.route('/api/v1/blog', blogRoute)
 // middlware

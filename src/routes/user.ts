@@ -1,12 +1,8 @@
 import { Hono } from 'hono'
 import { Prisma, PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
-import { jwt, sign, verify } from 'hono/jwt'
-import { X_HONO_DISABLE_SSG_HEADER_KEY } from 'hono/ssg'
-import { object, string, z } from 'zod'
+import {  sign, verify } from 'hono/jwt'
 import { signinInput, signupInput,  } from '@tanviirsinghh/medium-common'
-import { User } from '../../../Blog/src/hooks/index';
-import { SigninInput } from '../../../common/dist/index';
 
 
 export const userRoute = new Hono<{
@@ -43,24 +39,27 @@ userRoute.post('/signup', async c => {
   
 
 
-  const apikey = c.env.API_KEY
-  const secret = c.env.OTP_SECRET
 
   const body = await c.req.json()
        
 
-  const { success } = signupInput.safeParse(body)
-
-  if (!success) {
-    c.status(411)
+  const validationResult = signupInput.safeParse(body)
+  if (!validationResult.success) {
+    c.status(411);
     return c.json({
-      message: 'Input not correct'
-    })
-  }
+        message: 'Input not correct',
+        errors: validationResult.error.errors.map(err => ({
+            field: err.path[0],
+            message: err.message
+        }))
+    });
+}
 
+// Use validated data
+const validatedData = validationResult.data;
   const emailCheck = await prisma.user.findUnique({
     where: {
-      email: body.email
+      email: validatedData.email
     }
   })
   if (emailCheck) {
@@ -73,13 +72,13 @@ userRoute.post('/signup', async c => {
   try {
     const user = await prisma.user.create({
       data: {
-        name: body.name,
-        email: body.email,
-        password: body.password,
-        blogName: body.blogName,
-        profilePicture: body.profilePicture,
-        bio:body.bio,
-        location:body.location,
+        name: validatedData.name,
+        email: validatedData.email,
+        password: validatedData.password,
+        blogName: validatedData.blogName,
+        profilePicture: validatedData.profilePicture,
+        bio:validatedData.bio,
+        location:validatedData.location,
       }
     })
 
@@ -105,20 +104,26 @@ userRoute.post('/signin', async c => {
   }).$extends(withAccelerate())
 
   const body = await c.req.json()
-  console.log('backend')
 
-  const { success } = signinInput.safeParse(body)
-  if (!success) {
-    c.status(411)
-    return c.json({
-      message: 'Input not correct'
-    })
-  }
+  const validationResult = signinInput.safeParse(body);
+
+        if (!validationResult.success) {
+            c.status(411);
+            return c.json({
+              message: 'Input not correct',
+              errors: validationResult.error.errors.map(err => ({
+                  field: err.path[0],
+                  message: err.message
+              }))
+          });
+        }
+
+        const validatedData = validationResult.data;
   try {
     const user = await prisma.user.findUnique({
       where: {
-        email: body.email,
-        password: body.password
+        email: validatedData.email,
+        password: validatedData.password
       }
     })
     if (!user) {
@@ -133,8 +138,9 @@ userRoute.post('/signin', async c => {
   } catch (e) {
     c.status(500)
 
-    return c.text('Please try again')
-  }
+    return c.json({
+      message: 'Internal server error'
+    })  }
 })
 
 userRoute.get('/details', async c => {
@@ -161,7 +167,6 @@ userRoute.get('/details', async c => {
 
   const queryUserId = c.req.query('authorId')
 
-   console.log('backend detail author id te user match krdi ke nhi', queryUserId, decode.id)
 
   let userId: string
   if (queryUserId) {
