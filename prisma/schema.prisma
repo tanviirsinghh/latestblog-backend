@@ -34,12 +34,11 @@ model Post {
   published  Boolean     @default(false)
   authorId   String
   url        String?
-  like       Like[] 
+  like       Like[]
   author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  savedPosts SavedPost[] 
-  comment    Comment[] 
-  createdAt  DateTime    @default(now())  // Add this field
-
+  savedPosts SavedPost[]
+  comment    Comment[]
+  createdAt  DateTime    @default(now())
 }
 
 model Like {
@@ -52,28 +51,15 @@ model Like {
   @@unique([postId, userId])
 }
 
-// model Comment {
-//   id                 String @id @default(uuid())
-//   userId             String
-//   userName           String
-//   userProfilePicture String
-//   postId             String
-//   timestamp          String
-//   comment            String
-//   user               User   @relation(fields: [userId], references: [id])
-//   post               Post   @relation(fields: [postId], references: [id])
-// }
-
-
 model Comment {
   id        String   @id @default(uuid())
   userId    String
   postId    String
-  content   String   // Renamed from "comment"
-  timestamp DateTime // Changed from String to DateTime
+  content   String
+  timestamp DateTime
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model SavedPost {
