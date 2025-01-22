@@ -2,11 +2,9 @@ import { Prisma, PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { createBlogInput, updateBlogInput } from '@tanviirsinghh/medium-common'
 import { Hono } from 'hono'
-// import {UpdateBlogInput}  from '../../../common/dist/index.js'
 import { jwt, sign, verify } from 'hono/jwt'
 import { JWTPayload } from 'hono/utils/jwt/types'
-// import SavedBlogs from '../../../Blog/src/components/UserProfile.tsx/SavedBlogs'
-// import { UpdateBlogInput } from '../../../common/dist/index';
+
 
 export const blogRoute = new Hono<{
   Bindings: {
@@ -23,15 +21,12 @@ interface jwtpayload {
 
 blogRoute.use('/*', async (c, next) => {
   const verified = c.req.header('authorization') || ''
-  // const token = verified.split(" ")[1]
   const decode = (await verify(verified, c.env.JWT_SECRET)) as JWTPayload
-  console.log(decode)
 
   //  this can cause error because this was previously giving error thats why its is assigned string, if keep getting error then remove the string from here
 
   if (decode && typeof decode.id === 'string') {
     c.set('userId', decode.id)
-    console.log(decode.id)
     await next()
   } else {
     c.status(403)
@@ -46,21 +41,11 @@ blogRoute.post('/', async c => {
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
-  console.log('entered backend')
 
   const authorId = c.get('userId')
 
   const body = await c.req.json()
-  console.log(body)
-  // const { success } = createBlogInput.safeParse(body)
-  // console.log(JSON.stringify(success))
-  // if (!success) {
-  //   c.status(411)
-  //   return c.json({
-  //     message: 'Input not correct'
-  //   })
-  // }
-  console.log('try block of create blog')
+  
   try {
     const post = await prisma.post.create({
       data: {
@@ -88,7 +73,6 @@ blogRoute.put('/editedblog/:id', async c => {
   const id =  c.req.param('id')
   const body = await c.req.json()
   
-  console.log(body)
   const { success } = updateBlogInput.safeParse(body)
   if (!success) {
     c.status(411)
@@ -118,8 +102,6 @@ blogRoute.put('/editedblog/:id', async c => {
     return c.text('Token not verified')
   }
 
-  console.log("update blog")
-
   try{
   const post = await prisma.post.update({
     where: {
@@ -147,8 +129,7 @@ blogRoute.delete('/deleteblog/:id', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
-  console.log('backend')
-  // const body = await c.req.json()
+
   const postId = c.req.param('id')
   if (!postId) {
     c.status(400)
@@ -159,7 +140,6 @@ blogRoute.delete('/deleteblog/:id', async c => {
     c.status(401)
     return c.text('Token not found')
   }
-  console.log('token aagya')
 
   const decode = (await verify(token, c.env.JWT_SECRET)) as {
     id: string | undefined
@@ -169,9 +149,7 @@ blogRoute.delete('/deleteblog/:id', async c => {
     c.status(411)
     return c.text('Token not verified or ID missing')
   }
-  // if(!decode){
-  console.log('start delete')
-  console.log(postId)
+
   try {
        const response = await prisma.post.delete({
          where: {
@@ -193,22 +171,14 @@ blogRoute.delete('/deleteblog/:id', async c => {
   }
 })
 
-
-
-
-
-// Might add pagination later
 blogRoute.get('/bulk', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
-  // const authorId = c.req.query('authorId');  // Retrieving authorId query parameter
   const authHeader = c.req.header('Authorization')
   let decode: { id: string } | null = null
-  // let userId;
 
-  // Check if Authorization header is available
   if (!authHeader) {
     c.status(401)
     return c.text('Token not available')
@@ -224,21 +194,6 @@ blogRoute.get('/bulk', async c => {
     c.status(500)
     return c.text('Token not verified')
   }
-
-  // Determine the userId based on the authorId query or logged-in user
-  // if (authorId) {
-  //   if (authorId === decode.id) {
-  //     // If authorId matches the logged-in user, fetch the user's own posts
-  //     userId = decode.id;
-  //   } else {
-  //     // Otherwise, fetch posts for the specified author
-  //     userId = authorId;
-  //   }
-  // } else {
-  //   // If no authorId, fetch posts for the logged-in user
-  //   userId = decode.id;
-  // }
-
 
   try {
     // Fetch the posts based on the determined userId
@@ -256,7 +211,6 @@ blogRoute.get('/bulk', async c => {
             savedPosts:true
           }
       },
-
         author: {
           select: {
             name: true,
@@ -264,9 +218,6 @@ blogRoute.get('/bulk', async c => {
           }
         }
       },
-      // orderBy: {
-      //   createdAt: 'desc'
-      // }
     })
 
     return c.json({
@@ -321,8 +272,6 @@ blogRoute.get('/posts', async c => {
     userId = decode.id
   }
 
-  console.log(`Fetching posts for userId: ${userId}`)
-
   try {
     // Fetch the posts based on the determined userId
     const posts = await prisma.post.findMany({
@@ -368,16 +317,13 @@ blogRoute.get('/:id', async c => {
 
   const authHeader = c.req.header('Authorization')
   let decode: { id: string } | null = null
-  // let userId;
 
   // Check if Authorization header is available
   if (!authHeader) {
     c.status(401)
     return c.text('Token not available')
   }
-
   const token = authHeader.replace('Bearer ', '')
-
   try {
     // Decode the token and extract user info
     decode = (await verify(token, c.env.JWT_SECRET)) as { id: string }
@@ -387,7 +333,6 @@ blogRoute.get('/:id', async c => {
     return c.text('Token not verified')
   }
   const userId = decode.id
-  // const editButton: boolean
 
   try {
     const post = await prisma.post.findFirst({
@@ -409,8 +354,6 @@ blogRoute.get('/:id', async c => {
         author: {
           select: {
             name: true,
-            
-            
           }
         }
       }
@@ -441,12 +384,10 @@ blogRoute.post('/:id/like', async c => {
     c.status(401)
     return c.text('Token not found')
   }
-  console.log('token aagya')
 
   const decode = (await verify(token, c.env.JWT_SECRET)) as {
     id: string | undefined
   }
-  console.log('likre api backend token' + decode)
 
 
   if (!decode?.id) {
@@ -455,15 +396,6 @@ blogRoute.post('/:id/like', async c => {
   } // Decode token to get userId
   const userId = decode.id
 
-  // Check if already liked
-  // const existingLike = await prisma.like.findUnique({
-  //   where: { postId_userId: { postId, userId } }
-  // })
-  // if (existingLike) {
-  //   console.log('already liked in backend' + existingLike)
-  //   c.status(400)
-  //   return c.text('Already liked')
-  // }
   try {
     // Create a like
     const response = await prisma.like.create({
@@ -474,7 +406,6 @@ blogRoute.post('/:id/like', async c => {
     })
 
     return c.json({ 
-      
       isLiked:true,
        message: 'Post Liked' 
       })
@@ -494,7 +425,6 @@ blogRoute.delete('/:id/likeremove', async c => {
 
   const postId = c.req.param('id')
   const token = c.req.header('authorization')
- console.log('enter remove like')
   if (!token) {
     c.status(401)
     return c.text('Token not found')
@@ -503,16 +433,12 @@ blogRoute.delete('/:id/likeremove', async c => {
   const decode = (await verify(token, c.env.JWT_SECRET)) as {
     id: string | undefined
   }
-  console.log("remove like token check"+ decode)
   if (!decode?.id) {
     c.status(411)
     return c.text('Token not verified or ID missing')
   } // Decode token to get userId
   const userId = decode.id 
-  
-  
   // Check if already liked
-
   try {
     // Create a like
     const removed = await prisma.like.delete({
@@ -557,7 +483,6 @@ blogRoute.get('/likestatus/:id', async c => {
     return c.text('Token not verified or ID missing')
   }
   const userId = decode.id
-  console.log("backend fetch like status id checkS" + postId,userId )
 
   try {
     const existingLike = await prisma.like.findUnique({
@@ -625,7 +550,6 @@ blogRoute.post('/saveblog', async c => {
     c.status(401)
     return c.text('Token not found')
   }
-  console.log('token aagya')
 
   const decode = (await verify(token, c.env.JWT_SECRET)) as {
     id: string | undefined
@@ -635,7 +559,6 @@ blogRoute.post('/saveblog', async c => {
     c.status(411)
     return c.text('Token not verified or ID missing')
   }
-  console.log('start')
 
   try {
     const saveBlog = await prisma.savedPost.create({
@@ -652,40 +575,6 @@ blogRoute.post('/saveblog', async c => {
     })
   }
 })
-
-// blogRoute.get('/savedblogs', async c => {
-//   const prisma = new PrismaClient({
-//     datasourceUrl: c.env.DATABASE_URL
-//   }).$extends(withAccelerate())
-
-//   const token = c.req.header('authorization')
-//   if (!token) {
-//     c.status(401)
-//     return c.text('Token not found')
-//   }
-
-//   const decode = (await verify(token, c.env.JWT_SECRET)) as {
-//     id: string | undefined
-//   }
-//   if (!decode?.id) {
-//     c.status(401)
-//     return c.text('Token not verified')
-//   }
-
-//   try {
-//     const savedBlogs = await prisma.savedPost.findMany({
-//       where: { userId: decode.id },
-//       include: { post: true } // Include post details if needed
-//     })
-
-//     return c.json(savedBlogs)
-//   } catch (e) {
-//     c.status(411)
-//     return c.json({
-//       message: 'Error while fetching blog post'
-//     })
-//   }
-// })
 
 blogRoute.get('/bookmarkstatus/:id', async c => {
   const prisma = new PrismaClient({
@@ -750,8 +639,7 @@ blogRoute.delete('/removesavedblog/:id', async c => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
-  console.log('backend')
-  // const body = await c.req.json()
+
   const id = c.req.param('id')
   if (!id) {
     c.status(400)
@@ -762,7 +650,6 @@ blogRoute.delete('/removesavedblog/:id', async c => {
     c.status(401)
     return c.text('Token not found')
   }
-  console.log('token aagya')
 
   const decode = (await verify(token, c.env.JWT_SECRET)) as {
     id: string | undefined
@@ -772,9 +659,7 @@ blogRoute.delete('/removesavedblog/:id', async c => {
     c.status(411)
     return c.text('Token not verified or ID missing')
   }
-  // if(!decode){
-  console.log('start delete')
-  console.log(decode.id)
+  
   try {
     const remove = await prisma.savedPost.deleteMany({
       where: {
@@ -808,7 +693,6 @@ blogRoute.post('/:id/comment', async c => {
     datasourceUrl: c.env.DATABASE_URL
   }).$extends(withAccelerate())
 
-  console.log('entered backend comment api')
 
   const blogId = c.req.param('id')
   const body = await c.req.json()
@@ -827,7 +711,6 @@ blogRoute.post('/:id/comment', async c => {
     return c.text('Token not verified or ID missing')
   }
  
-  console.log('try block of create blog')
   try {
     const post = await prisma.comment.create({
       data: {
@@ -839,12 +722,8 @@ blogRoute.post('/:id/comment', async c => {
     })
     
       return c.json(
-        
           post
-        
-        
       )
-    
     
   } catch (e) {
     c.status(500)
@@ -896,7 +775,6 @@ blogRoute.get('/:id/comments', async c => {
       // Blog not found
       return c.json(
         {
-          
           message: 'No Comments'
         },
         404
@@ -906,7 +784,6 @@ blogRoute.get('/:id/comments', async c => {
     // Blog found
     return c.json(
       {
-        
         comments
       },
       200
@@ -915,7 +792,6 @@ blogRoute.get('/:id/comments', async c => {
     // Handle errors like database connection issues
     return c.json(
       {
-        
         message: 'Error while fetching comments'
       },
       411
