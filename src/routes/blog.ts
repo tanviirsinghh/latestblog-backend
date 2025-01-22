@@ -198,6 +198,9 @@ blogRoute.get('/bulk', async c => {
   try {
     // Fetch the posts based on the determined userId
     const posts = await prisma.post.findMany({
+      orderBy: {
+        createdAt: 'desc'  // or updatedAt: 'desc'
+      },
       select: {
         content: true,
         title: true,
@@ -277,6 +280,9 @@ blogRoute.get('/posts', async c => {
     const posts = await prisma.post.findMany({
       where: {
         authorId: userId // Filtering posts by authorId
+      },
+      orderBy: {
+        createdAt: 'desc'  // or updatedAt: 'desc'
       },
       select: {
         content: true,
@@ -759,6 +765,9 @@ blogRoute.get('/:id/comments', async c => {
       where: {
         postId: postId,
        
+      },
+      orderBy: {
+        timestamp: 'desc'  // or updatedAt: 'desc'
       },include:{
         user:{
           select:{
